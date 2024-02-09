@@ -1,5 +1,5 @@
 [project]
-name = "ietfdb"
+name    = "ietfdb"
 version = "0.0.1"
 authors = [
   { name="Colin Perkins", email="csp@csperkins.org" },
@@ -12,12 +12,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "requests",
+]
 
 [project.urls]
 Homepage = "https://github.com/csperkins/ietfdb"
 Issues   = "https://github.com/csperkins/ietfdb/issues"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
