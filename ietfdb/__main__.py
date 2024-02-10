@@ -320,18 +320,11 @@ def create_db_table(db_cursor, schemas, endpoint):
         elif column['type'] == "integer" or column['type'] == "boolean": 
             column_sql = f"  \"{column['name']}\" INTEGER"
         elif column['type'] == "to_one": 
-            foreign_api   = schema["to_one"][column["name"]]["refers_to_endpoint"]
+            # We handle to_one references by resource_uri
             foreign_table = schema["to_one"][column["name"]]["refers_to_table"]
-            foreign_type  = schemas[foreign_api]["columns"][schemas[foreign_api]["primary_key"]]["type"]
-            foreign_key   = schemas[foreign_api]["primary_key"]
-            if foreign_type == "string" or foreign_type == "datetime":
-                column_sql = f"  \"{column['name']}\" TEXT"
-            elif foreign_type == "integer":
-                column_sql = f"  \"{column['name']}\" INTEGER"
-            else:
-                print(f"unknown foreign type {column['type']}")
-                sys.exit(1)
+            foreign_key   = "resource_uri"
             foreign.append(f"  FOREIGN KEY (\"{column['name']}\") REFERENCES {foreign_table} (\"{foreign_key}\")")
+            column_sql = f"  \"{column['name']}\" TEXT"
         elif column['type'] == "to_many": 
             # FIXME
             #column_sql = f"  \"{column['name']}\" TEXT"
@@ -342,7 +335,12 @@ def create_db_table(db_cursor, schemas, endpoint):
             print(f"unknown column type {column['type']}")
             sys.exit(1)
 
-        if column["primary"]:
+        if column["unique"]:
+            column_sql += " UNIQUE"
+        # We ignore the primary key specified in the schema, and use the
+        # datatracker resource_uri as the primary key. This simplifies
+        # handling to_one references.
+        if column["name"] == "resource_uri":
             column_sql += " PRIMARY KEY"
         columns.append(column_sql)
     sql = f"CREATE TABLE {schema['table']} (\n"
@@ -387,22 +385,23 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
             if column['type'] in ["string", "datetime", "integer", "boolean"]:
                 values.append(item[column["name"]])
             elif column['type'] == "to_one": 
-                foreign_api   = schema["to_one"][column["name"]]["refers_to_endpoint"]
-                # FIXME: some foreign keys don't refer to the primary key of the respective table 
-                # (e.g., /api/v1/doc/document/ references are to "name" but the primary key is "id").
-                # We may need to search through all the "unique" fields to find the one to match.
-                foreign_type  = schemas[foreign_api]["columns"][schemas[foreign_api]["primary_key"]]["type"]
-                if item[column["name"]] is None:
-                    values.append(None)
-                else:
-                    foreign_value = item[column["name"]].split("/")[-2]
-                    if foreign_type == "string" or foreign_type == "datetime":
-                        values.append(foreign_value)
-                    elif foreign_type == "integer":
-                        values.append(int(foreign_value))
-                    else:
-                        print(f"unknown foreign type {column['type']}")
-                        sys.exit(1)
+                values.append(item[column["name"]])
+                # foreign_api   = schema["to_one"][column["name"]]["refers_to_endpoint"]
+                # # FIXME: some foreign keys don't refer to the primary key of the respective table 
+                # # (e.g., /api/v1/doc/document/ references are to "name" but the primary key is "id").
+                # # We may need to search through all the "unique" fields to find the one to match.
+                # foreign_type  = schemas[foreign_api]["columns"][schemas[foreign_api]["primary_key"]]["type"]
+                # if item[column["name"]] is None:
+                #     values.append(None)
+                # else:
+                #     foreign_value = item[column["name"]].split("/")[-2]
+                #     if foreign_type == "string" or foreign_type == "datetime":
+                #         values.append(foreign_value)
+                #     elif foreign_type == "integer":
+                #         values.append(int(foreign_value))
+                #     else:
+                #         print(f"unknown foreign type {column['type']}")
+                #         sys.exit(1)
             elif column['type'] == "to_many": 
                 # FIXME
                 continue
