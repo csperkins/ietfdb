@@ -21,12 +21,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
 import requests
 import sqlite3
 import sys
 import json
 
-from datetime import datetime
 from graphlib import TopologicalSorter
 from typing   import Any, Dict, Iterator
 from pprint   import pprint
@@ -186,6 +186,7 @@ endpoints_to_mirror = {
 		"/api/v1/liaisons/relatedliaisonstatement/"    : {"mirror": False},
 		"/api/v1/mailinglists/allowlisted/"            : {"mirror": False},
 		"/api/v1/mailinglists/list/"                   : {"mirror": False},
+        "/api/v1/mailinglists/nonwgmailinglist/"       : {"mirror": False},
 		"/api/v1/mailinglists/subscribed/"             : {"mirror": False},
 		"/api/v1/mailtrigger/mailtrigger/"             : {"mirror": False},
 		"/api/v1/mailtrigger/recipient/"               : {"mirror": False},
@@ -224,9 +225,9 @@ endpoints_to_mirror = {
 		"/api/v1/name/doctagname/"                     : {"mirror": False},
 		"/api/v1/name/doctypename/"                    : {"mirror": True},
 		"/api/v1/name/docurltagname/"                  : {"mirror": False},
-		"/api/v1/name/draftsubmissionstatename/"       : {"mirror": False},
-		"/api/v1/name/extresourcename/"                : {"mirror": False},
-		"/api/v1/name/extresourcetypename/"            : {"mirror": False},
+		"/api/v1/name/draftsubmissionstatename/"       : {"mirror": True},
+		"/api/v1/name/extresourcename/"                : {"mirror": True},
+		"/api/v1/name/extresourcetypename/"            : {"mirror": True},
 		"/api/v1/name/feedbacktypename/"               : {"mirror": False},
 		"/api/v1/name/formallanguagename/"             : {"mirror": False},
 		"/api/v1/name/groupmilestonestatename/"        : {"mirror": False},
@@ -271,15 +272,15 @@ endpoints_to_mirror = {
 		"/api/v1/nomcom/topic/"                        : {"mirror": False},
 		"/api/v1/nomcom/topicfeedbacklastseen/"        : {"mirror": False},
 		"/api/v1/nomcom/volunteer/"                    : {"mirror": False},
-		"/api/v1/person/alias/"                        : {"mirror": False},
+		"/api/v1/person/alias/"                        : {"mirror": True},
 		"/api/v1/person/email/"                        : {"mirror": True},
-		"/api/v1/person/historicalemail/"              : {"mirror": False},
-		"/api/v1/person/historicalperson/"             : {"mirror": False},
+		"/api/v1/person/historicalemail/"              : {"mirror": True},
+		"/api/v1/person/historicalperson/"             : {"mirror": True},
 		"/api/v1/person/person/"                       : {"mirror": True},
-		"/api/v1/person/personalapikey/"               : {"mirror": False},
-		"/api/v1/person/personapikeyevent/"            : {"mirror": False},
-		"/api/v1/person/personevent/"                  : {"mirror": False},
-		"/api/v1/person/personextresource/"            : {"mirror": False},
+		"/api/v1/person/personalapikey/"               : {"mirror": False}, # Unavailable in the public datatracker API
+        "/api/v1/person/personapikeyevent/"            : {"mirror": False}, # Not useful: a subset of /api/v1/person/personevent/
+		"/api/v1/person/personevent/"                  : {"mirror": False}, # Not useful: a record of datatracker login events
+		"/api/v1/person/personextresource/"            : {"mirror": True},
 		"/api/v1/redirects/command/"                   : {"mirror": False},
 		"/api/v1/redirects/redirect/"                  : {"mirror": False},
 		"/api/v1/redirects/suffix/"                    : {"mirror": False},
@@ -299,40 +300,50 @@ endpoints_to_mirror = {
 		"/api/v1/stats/affiliationignoredending/"      : {"mirror": False},
 		"/api/v1/stats/countryalias/"                  : {"mirror": False},
 		"/api/v1/stats/meetingregistration/"           : {"mirror": False},
-		"/api/v1/submit/preapproval/"                  : {"mirror": False},
-		"/api/v1/submit/submission/"                   : {"mirror": False},
-		"/api/v1/submit/submissioncheck/"              : {"mirror": False},
-		"/api/v1/submit/submissionemailevent/"         : {"mirror": False},
-		"/api/v1/submit/submissionevent/"              : {"mirror": False},
-		"/api/v1/submit/submissionextresource/"        : {"mirror": False},
-		"/api/v1/utils/dumpinfo/"                      : {"mirror": False},
-		"/api/v1/utils/versioninfo/"                   : {"mirror": False},
+		"/api/v1/submit/preapproval/"                  : {"mirror": True},
+		"/api/v1/submit/submission/"                   : {"mirror": True},
+		"/api/v1/submit/submissioncheck/"              : {"mirror": True},
+		"/api/v1/submit/submissionemailevent/"         : {"mirror": False}, # Subset of /api/v1/submit/submissionevent/
+		"/api/v1/submit/submissionevent/"              : {"mirror": True},
+		"/api/v1/submit/submissionextresource/"        : {"mirror": True},
+		"/api/v1/utils/dumpinfo/"                      : {"mirror": False}, # Unused in the datatracker
+		"/api/v1/utils/versioninfo/"                   : {"mirror": True},
 }
 
 
 def create_db_table(db_cursor, schemas, endpoint):
+    print(f"Create table {endpoint}")
     schema  = schemas[endpoint]
     columns = []
     foreign = []
     for column in schema["columns"].values():
-        if column['type'] == "string" or column['type'] == "datetime":
+        if column['type'] == "string" or column['type'] == "datetime" or column['type'] == "date":
             column_sql = f"  \"{column['name']}\" TEXT"
         elif column['type'] == "integer" or column['type'] == "boolean": 
             column_sql = f"  \"{column['name']}\" INTEGER"
         elif column['type'] == "to_one": 
             # We handle to_one references by resource_uri
             foreign_table = schema["to_one"][column["name"]]["refers_to_table"]
-            foreign_key   = "resource_uri"
-            foreign.append(f"  FOREIGN KEY (\"{column['name']}\") REFERENCES {foreign_table} (\"{foreign_key}\")")
+            foreign.append(f"  FOREIGN KEY (\"{column['name']}\") REFERENCES {foreign_table} (\"resource_uri\")")
             column_sql = f"  \"{column['name']}\" TEXT"
         elif column['type'] == "to_many": 
-            # FIXME
-            #column_sql = f"  \"{column['name']}\" TEXT"
+            foreign_table  = schema["to_many"][column["name"]]["refers_to_table"]
+            column_current = schema['table'].split('_')[-1]
+            column_foreign = column['name']
+            sql  = f"CREATE TABLE {schema['table']}_{column['name']} (\n"
+            sql += f"  \"id\" INTEGER PRIMARY KEY,\n"
+            sql += f"  \"{column_current}\" TEXT,\n"
+            sql += f"  \"{column_foreign}\" TEXT,\n"
+            sql += f"  FOREIGN KEY (\"{column_current}\") REFERENCES {schema['table']} (\"resource_uri\"),\n"
+            sql += f"  FOREIGN KEY (\"{column_foreign}\") REFERENCES {foreign_table} (\"resource_uri\")\n"
+            sql += f");\n"
+            #print(sql)
+            db_cursor.execute(sql)
             continue
         elif column['type'] == None:
             continue
         else:
-            print(f"unknown column type {column['type']}")
+            print(f"unknown column type {column['type']} (create_db_table)")
             sys.exit(1)
 
         if column["unique"]:
@@ -349,12 +360,12 @@ def create_db_table(db_cursor, schemas, endpoint):
         sql += ",\n"
         sql += ",\n".join(foreign)
     sql += "\n);\n"
-    print(sql)
     db_cursor.execute(sql)
 
 
 
 def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
+    print(f"Import table {endpoint}")
     schema  = schemas[endpoint]
 
     vcount  = 0
@@ -362,14 +373,14 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
     for column in schema["columns"].values():
         if column['name'] == schema['sort_by']:
             ordered = True
-        if column['type'] in ["string", "datetime", "integer", "boolean", "to_one"]: 
+        if column['type'] in ["string", "date", "datetime", "integer", "boolean", "to_one"]: 
             vcount += 1
         elif column['type'] == "to_many": 
             continue
         elif column['type'] == None:
             continue
         else:
-            print(f"unknown column type {column['type']}")
+            print(f"unknown column type {column['type']} (import_db_table #1)")
             sys.exit(1)
 
     sql = f"INSERT INTO {schema['table']} VALUES(" + ",".join("?" * vcount) + ")"
@@ -379,36 +390,33 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
         uri = endpoint
 
     for item in dt.fetch_multi(uri):
-        print(item["resource_uri"])
+        #print(f"  {item['resource_uri']}")
         values = []
         for column in schema["columns"].values():
-            if column['type'] in ["string", "datetime", "integer", "boolean"]:
+            if column['type'] in ["string", "integer", "boolean", "date"]:
                 values.append(item[column["name"]])
+            elif column['type'] == "datetime": 
+                if item[column["name"]] is None:
+                    values.append(None)
+                else:
+                    # FIXME: check this correctly converts to UTC
+                    dt_val = datetime.datetime.fromisoformat(item[column["name"]])
+                    dt_fmt = dt_val.astimezone(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
+                    values.append(dt_fmt)
             elif column['type'] == "to_one": 
                 values.append(item[column["name"]])
-                # foreign_api   = schema["to_one"][column["name"]]["refers_to_endpoint"]
-                # # FIXME: some foreign keys don't refer to the primary key of the respective table 
-                # # (e.g., /api/v1/doc/document/ references are to "name" but the primary key is "id").
-                # # We may need to search through all the "unique" fields to find the one to match.
-                # foreign_type  = schemas[foreign_api]["columns"][schemas[foreign_api]["primary_key"]]["type"]
-                # if item[column["name"]] is None:
-                #     values.append(None)
-                # else:
-                #     foreign_value = item[column["name"]].split("/")[-2]
-                #     if foreign_type == "string" or foreign_type == "datetime":
-                #         values.append(foreign_value)
-                #     elif foreign_type == "integer":
-                #         values.append(int(foreign_value))
-                #     else:
-                #         print(f"unknown foreign type {column['type']}")
-                #         sys.exit(1)
             elif column['type'] == "to_many": 
-                # FIXME
+                column_current = schema['table'].split('_')[-1]
+                column_foreign = column['name']
+                for subtable_item in item[column['name']]:
+                    subtable_sql  = f"INSERT INTO {schema['table']}_{column['name']} "
+                    subtable_sql += f"(\"{column_current}\", \"{column_foreign}\") VALUES(?, ?)"
+                    db_cursor.execute(subtable_sql, (item['resource_uri'], subtable_item))
                 continue
             elif column['type'] == None:
                 continue
             else:
-                print(f"unknown column type {column['type']}")
+                print(f"unknown column type {column['type']} (import_db_table #2)")
                 sys.exit(1)
         db_cursor.execute(sql, tuple(values))
         db_connection.commit()
@@ -470,10 +478,11 @@ for endpoint in endpoints:
                     val = item[column["name"]]
                     if item[column["name"]] is not None and item[column["name"]] != "" and len(item[column["name"]]) > 0:
                         to_many = {
-                            "refers_to": "ietf_dt_" + "_".join(item[column["name"]][0].split("/")[3:-2])
+                            "refers_to_endpoint": "/".join(item[column["name"]][0].split("/")[:-2]) + "/",
+                            "refers_to_table": "ietf_dt_" + "_".join(item[column["name"]][0].split("/")[3:-2])
                         }
                         schema["to_many"][column["name"]] = to_many
-                        print(f"    {column['name']} -> {to_many['refers_to']} (many)")
+                        print(f"    {column['name']} -> {to_many['refers_to_table']} (many)")
                 if column["name"] not in schema["to_many"]:
                     found_all = False
         if found_all:
@@ -493,11 +502,13 @@ with open("cache.json", "w") as outf:
 # Create the database tables:
 for endpoint in endpoints:
     create_db_table(db_cursor, schemas, endpoint)
+print("")
 
 # Populate the database tables:
 for endpoint in endpoints:
     import_db_table(db_cursor, db_connection, schemas, endpoint, dt)
-    with open("cache.json", "w") as outf:
-        json.dump(dt.cache, outf, indent=3)
+
+with open("cache.json", "w") as outf:
+    json.dump(dt.cache, outf, indent=3)
 
 
