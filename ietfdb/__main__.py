@@ -41,10 +41,6 @@ class Datatracker:
         self.session = requests.Session()
         self.dt_url  = dt_url
         self.cache   = {}
-        if Path("cache.json").exists():
-            with open("cache.json", "r") as inf:
-                self.cache = json.load(inf)
-                print(f"Loaded {len(self.cache)} items from cache")
 
 
     def fetch_multi(self, uri: str) -> Iterator[Dict[Any, Any]]:
@@ -184,9 +180,9 @@ endpoints_to_mirror = {
     "/api/v1/liaisons/liaisonstatementattachment/" : {"mirror": True},
     "/api/v1/liaisons/liaisonstatementevent/"      : {"mirror": True},
     "/api/v1/liaisons/relatedliaisonstatement/"    : {"mirror": True},
-    "/api/v1/mailinglists/allowlisted/"            : {"mirror": False},
+    "/api/v1/mailinglists/allowlisted/"            : {"mirror": False}, # Not available in public API
     "/api/v1/mailinglists/list/"                   : {"mirror": False}, # Not available in public API
-    "/api/v1/mailinglists/nonwgmailinglist/"       : {"mirror": True},
+    "/api/v1/mailinglists/nonwgmailinglist/"       : {"mirror": False}, # Not available in public API
     "/api/v1/mailinglists/subscribed/"             : {"mirror": False}, # Not available in public API
     "/api/v1/mailtrigger/mailtrigger/"             : {"mirror": True},
     "/api/v1/mailtrigger/recipient/"               : {"mirror": True},
@@ -317,7 +313,7 @@ def create_db_table(db_cursor, schemas, endpoint):
     columns = []
     foreign = []
     for column in schema["columns"].values():
-        if column['type'] == "string" or column['type'] == "datetime" or column['type'] == "date":
+        if column['type'] == "string" or column['type'] == "datetime" or column['type'] == "date" or column['type'] == "timedelta":
             column_sql = f"  \"{column['name']}\" TEXT"
         elif column['type'] == "integer" or column['type'] == "boolean": 
             column_sql = f"  \"{column['name']}\" INTEGER"
@@ -361,6 +357,8 @@ def create_db_table(db_cursor, schemas, endpoint):
         sql += ",\n".join(foreign)
     sql += "\n);\n"
     db_cursor.execute(sql)
+    sql = f"CREATE INDEX index_{schema['table']} ON {schema['table']}(resource_uri)"
+    db_cursor.execute(sql)
 
 
 
@@ -373,7 +371,7 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
     for column in schema["columns"].values():
         if column['name'] == schema['sort_by']:
             ordered = True
-        if column['type'] in ["string", "date", "datetime", "integer", "boolean", "to_one"]: 
+        if column['type'] in ["string", "date", "datetime", "timedelta", "integer", "boolean", "to_one"]: 
             vcount += 1
         elif column['type'] == "to_many": 
             continue
@@ -394,7 +392,7 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
         #print(f"  {item['resource_uri']}")
         values = []
         for column in schema["columns"].values():
-            if column['type'] in ["string", "integer", "boolean", "date"]:
+            if column['type'] in ["string", "integer", "boolean", "date", "timedelta"]:
                 values.append(item[column["name"]])
             elif column['type'] == "datetime": 
                 if item[column["name"]] is None:
@@ -463,9 +461,9 @@ for endpoint in endpoints:
         if column['name'] == schema['sort_by']:
             ordered = True
     if ordered:
-        uri = f"{endpoint}?order_by={schema['sort_by']}"
+        uri = f"{endpoint}?limit=100&order_by={schema['sort_by']}"
     else:
-        uri = endpoint
+        uri = f"{endpoint}?limit=100&"
 
     for item in dt.fetch_multi(uri):
         found_all = True
@@ -504,9 +502,6 @@ for endpoint in endpoints:
             column["type"] = None
 print("")
 
-with open("cache.json", "w") as outf:
-    json.dump(dt.cache, outf, indent=3)
-
 # Create the database tables:
 for endpoint in endpoints:
     create_db_table(db_cursor, schemas, endpoint)
@@ -515,8 +510,5 @@ print("")
 # Populate the database tables:
 for endpoint in endpoints:
     import_db_table(db_cursor, db_connection, schemas, endpoint, dt)
-
-with open("cache.json", "w") as outf:
-    json.dump(dt.cache, outf, indent=3)
 
 # vim: set tw=0 ai et:
