@@ -93,7 +93,7 @@ class Datatracker:
             }
             if "ordering" in schema:
                 result["sort_by"] = schema["ordering"][0]
-            if "_historical" in api_endpoint:
+            if "historical" in api_endpoint:
                 result["sort_by"] = None
                 print(f"Not sorting {api_endpoint}")
             for field_name in schema["fields"]:
