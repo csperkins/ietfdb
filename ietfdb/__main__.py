@@ -426,16 +426,12 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
 
 
 
-#dt = Datatracker("http://dundas:8000/")
 dt = Datatracker("http://localhost:8000/")
+
 db_connection = sqlite3.connect("ietf.db")
+db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file between writes
 
-# Tune sqlite. These favour performance over data integrity.
-db_connection.execute('PRAGMA synchronous = 0;')          # Don't force fsync on the file between writes
-db_connection.execute('PRAGMA cache_size = -2000000;')    # 2GB of memory for cache
-db_connection.execute('PRAGMA temp_store = MEMORY;')      # Store tempory data in memory
-
-db_cursor     = db_connection.cursor()
+db_cursor = db_connection.cursor()
 
 # Find the endpoints to mirror and fetch their database schema:
 schemas   = {}
