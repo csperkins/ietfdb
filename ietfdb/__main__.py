@@ -410,10 +410,15 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
             elif column['type'] == "to_many": 
                 column_current = schema['table'].split('_')[-1]
                 column_foreign = column['name']
+                subtable_sql = f"INSERT INTO {schema['table']}_{column['name']} (\"{column_current}\", \"{column_foreign}\") VALUES(?, ?)"
+                subtable_val = []
                 for subtable_item in item[column['name']]:
-                    subtable_sql  = f"INSERT INTO {schema['table']}_{column['name']} "
-                    subtable_sql += f"(\"{column_current}\", \"{column_foreign}\") VALUES(?, ?)"
-                    db_cursor.execute(subtable_sql, (item['resource_uri'], subtable_item))
+                    subtable_val.append((item['resource_uri'], subtable_item))
+                db_cursor.executemany(subtable_sql, subtable_val)
+                #for subtable_item in item[column['name']]:
+                #    subtable_sql  = f"INSERT INTO {schema['table']}_{column['name']} "
+                #    subtable_sql += f"(\"{column_current}\", \"{column_foreign}\") VALUES(?, ?)"
+                #    db_cursor.execute(subtable_sql, (item['resource_uri'], subtable_item))
                 continue
             elif column['type'] == None:
                 continue
