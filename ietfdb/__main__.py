@@ -511,4 +511,7 @@ print("")
 for endpoint in endpoints:
     import_db_table(db_cursor, db_connection, schemas, endpoint, dt)
 
+print("Vacuuming database")
+db_connection.execute('VACUUM;') # Don't force fsync on the file between writes
+
 # vim: set tw=0 ai et:
