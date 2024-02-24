@@ -68,7 +68,7 @@ class Datatracker:
         r1 = self.session.get(f"{self.dt_url}api/v1/")
         if r1.status_code == 200:
             for category in r1.json().values():
-                r2 = self.session.get(f"https://datatracker.ietf.org{category['list_endpoint']}")
+                r2 = self.session.get(f"{self.dt_url}{category['list_endpoint']}")
                 if r2.status_code == 200:
                     for endpoint in r2.json().values():
                         yield endpoint["list_endpoint"]
@@ -81,7 +81,7 @@ class Datatracker:
 
 
     def schema_for_endpoint(self, api_endpoint:str):
-        resp = self.session.get(f"https://datatracker.ietf.org{endpoint}schema")
+        resp = self.session.get(f"{self.dt_url}{endpoint}schema/")
         if resp.status_code == 200:
             schema = resp.json()
             result = {
@@ -387,9 +387,9 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
     sql = f"INSERT INTO {schema['table']} VALUES(" + ",".join("?" * vcount) + ")"
     val = []
     if ordered:
-        uri = f"{endpoint}?limit=100&order_by={schema['sort_by']}"
+        uri = f"{endpoint}?order_by={schema['sort_by']}"
     else:
-        uri = f"{endpoint}?limit=100"
+        uri = f"{endpoint}"
 
     for item in dt.fetch_multi(uri):
         #print(f"  {item['resource_uri']}")
@@ -465,9 +465,9 @@ for endpoint in endpoints:
         if column['name'] == schema['sort_by']:
             ordered = True
     if ordered:
-        uri = f"{endpoint}?limit=100&order_by={schema['sort_by']}"
+        uri = f"{endpoint}?order_by={schema['sort_by']}"
     else:
-        uri = f"{endpoint}?limit=100&"
+        uri = f"{endpoint}?"
 
     for item in dt.fetch_multi(uri):
         found_all = True
