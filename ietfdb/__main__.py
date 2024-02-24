@@ -286,7 +286,7 @@ endpoints_to_mirror = {
     "/api/v1/review/historicalreviewassignment/"   : {"mirror": True},
     "/api/v1/review/historicalreviewersettings/"   : {"mirror": True},
     "/api/v1/review/historicalreviewrequest/"      : {"mirror": True},
-    "/api/v1/review/historicalunavailableperiod/"  : {"mirror": True},
+    "/api/v1/review/historicalunavailableperiod/"  : {"mirror": False}, # This endpoint seems to throw errors
     "/api/v1/review/nextreviewerinteam/"           : {"mirror": True},
     "/api/v1/review/reviewassignment/"             : {"mirror": True},
     "/api/v1/review/reviewersettings/"             : {"mirror": True},
