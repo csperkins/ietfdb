@@ -387,9 +387,9 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
     sql = f"INSERT INTO {schema['table']} VALUES(" + ",".join("?" * vcount) + ")"
     val = []
     if ordered:
-        uri = f"{endpoint}?order_by={schema['sort_by']}"
+        uri = f"{endpoint}?limit=100&order_by={schema['sort_by']}"
     else:
-        uri = f"{endpoint}"
+        uri = f"{endpoint}?limit=100"
 
     for item in dt.fetch_multi(uri):
         #print(f"  {item['resource_uri']}")
@@ -461,9 +461,9 @@ for endpoint in endpoints:
         if column['name'] == schema['sort_by']:
             ordered = True
     if ordered:
-        uri = f"{endpoint}?order_by={schema['sort_by']}"
+        uri = f"{endpoint}?limit=100&order_by={schema['sort_by']}"
     else:
-        uri = f"{endpoint}?"
+        uri = f"{endpoint}?limit=100"
 
     for item in dt.fetch_multi(uri):
         found_all = True
