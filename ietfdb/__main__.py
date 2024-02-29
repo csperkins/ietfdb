@@ -114,199 +114,199 @@ class Datatracker:
 
 
 endpoints_to_mirror = {
-    "/api/v1/community/communitylist/"             : {"mirror": False}, # Not clear what this is
-    "/api/v1/community/emailsubscription/"         : {"mirror": False}, # Not clear what this is
-    "/api/v1/community/searchrule/"                : {"mirror": False}, # Not clear what this is
-    "/api/v1/dbtemplate/dbtemplate/"               : {"mirror": True},
-    "/api/v1/doc/addedmessageevent/"               : {"mirror": False}, # Unused in the datatracker
-    "/api/v1/doc/ballotdocevent/"                  : {"mirror": True},
-    "/api/v1/doc/ballotpositiondocevent/"          : {"mirror": True},
-    "/api/v1/doc/ballottype/"                      : {"mirror": True},
-    "/api/v1/doc/bofreqeditordocevent/"            : {"mirror": True},
-    "/api/v1/doc/bofreqresponsibledocevent/"       : {"mirror": True},
-    "/api/v1/doc/consensusdocevent/"               : {"mirror": True},
-    "/api/v1/doc/deletedevent/"                    : {"mirror": True},
-    "/api/v1/doc/docevent/"                        : {"mirror": True},
-    "/api/v1/doc/docextresource/"                  : {"mirror": True},
-    "/api/v1/doc/dochistory/"                      : {"mirror": True},
-    "/api/v1/doc/dochistoryauthor/"                : {"mirror": True},
-    "/api/v1/doc/docreminder/"                     : {"mirror": True},
-    "/api/v1/doc/document/"                        : {"mirror": True},
-    "/api/v1/doc/documentactionholder/"            : {"mirror": True},
-    "/api/v1/doc/documentauthor/"                  : {"mirror": True},
-    "/api/v1/doc/documenturl/"                     : {"mirror": True},
-    "/api/v1/doc/editedauthorsdocevent/"           : {"mirror": True},
-    "/api/v1/doc/ianaexpertdocevent/"              : {"mirror": True},
-    "/api/v1/doc/initialreviewdocevent/"           : {"mirror": True},
-    "/api/v1/doc/irsgballotdocevent/"              : {"mirror": True},
-    "/api/v1/doc/lastcalldocevent/"                : {"mirror": True},
-    "/api/v1/doc/newrevisiondocevent/"             : {"mirror": True},
-    "/api/v1/doc/relateddochistory/"               : {"mirror": True},
-    "/api/v1/doc/relateddocument/"                 : {"mirror": True},
-    "/api/v1/doc/reviewassignmentdocevent/"        : {"mirror": True},
-    "/api/v1/doc/reviewrequestdocevent/"           : {"mirror": True},
-    "/api/v1/doc/state/"                           : {"mirror": True},
-    "/api/v1/doc/statedocevent/"                   : {"mirror": True},
-    "/api/v1/doc/statetype/"                       : {"mirror": True},
-    "/api/v1/doc/submissiondocevent/"              : {"mirror": True},
-    "/api/v1/doc/telechatdocevent/"                : {"mirror": True},
-    "/api/v1/doc/writeupdocevent/"                 : {"mirror": True},
-    "/api/v1/group/appeal/"                        : {"mirror": True},
-    "/api/v1/group/appealartifact/"                : {"mirror": True},
-    "/api/v1/group/changestategroupevent/"         : {"mirror": True},
-    "/api/v1/group/group/"                         : {"mirror": True},
-    "/api/v1/group/groupevent/"                    : {"mirror": True},
-    "/api/v1/group/groupextresource/"              : {"mirror": True},
-    "/api/v1/group/groupfeatures/"                 : {"mirror": True},
-    "/api/v1/group/grouphistory/"                  : {"mirror": True},
-    "/api/v1/group/groupmilestone/"                : {"mirror": True},
-    "/api/v1/group/groupmilestonehistory/"         : {"mirror": True},
-    "/api/v1/group/groupstatetransitions/"         : {"mirror": True},
-    "/api/v1/group/groupurl/"                      : {"mirror": True},
-    "/api/v1/group/milestonegroupevent/"           : {"mirror": True},
-    "/api/v1/group/role/"                          : {"mirror": True},
-    "/api/v1/group/rolehistory/"                   : {"mirror": True},
-    "/api/v1/iesg/telechat/"                       : {"mirror": False}, # Not available in public API
-    "/api/v1/iesg/telechatagendacontent/"          : {"mirror": False}, # Not available in public API
-    "/api/v1/iesg/telechatagendaitem/"             : {"mirror": False}, # Not available in public API
-    "/api/v1/iesg/telechatdate/"                   : {"mirror": True},
-    "/api/v1/ipr/genericiprdisclosure/"            : {"mirror": True},
-    "/api/v1/ipr/holderiprdisclosure/"             : {"mirror": True},
-    "/api/v1/ipr/iprdisclosurebase/"               : {"mirror": True},
-    "/api/v1/ipr/iprdocrel/"                       : {"mirror": True},
-    "/api/v1/ipr/iprevent/"                        : {"mirror": True},
-    "/api/v1/ipr/legacymigrationiprevent/"         : {"mirror": True},
-    "/api/v1/ipr/nondocspecificiprdisclosure/"     : {"mirror": True},
-    "/api/v1/ipr/relatedipr/"                      : {"mirror": True},
-    "/api/v1/ipr/thirdpartyiprdisclosure/"         : {"mirror": True},
-    "/api/v1/liaisons/liaisonstatement/"           : {"mirror": True},
-    "/api/v1/liaisons/liaisonstatementattachment/" : {"mirror": True},
-    "/api/v1/liaisons/liaisonstatementevent/"      : {"mirror": True},
-    "/api/v1/liaisons/relatedliaisonstatement/"    : {"mirror": True},
-    "/api/v1/mailinglists/allowlisted/"            : {"mirror": False}, # Not available in public API
-    "/api/v1/mailinglists/list/"                   : {"mirror": False}, # Not available in public API
-    "/api/v1/mailinglists/nonwgmailinglist/"       : {"mirror": False}, # Not available in public API
-    "/api/v1/mailinglists/subscribed/"             : {"mirror": False}, # Not available in public API
-    "/api/v1/mailtrigger/mailtrigger/"             : {"mirror": True},
-    "/api/v1/mailtrigger/recipient/"               : {"mirror": True},
-    "/api/v1/meeting/attended/"                    : {"mirror": True},
-    "/api/v1/meeting/businessconstraint/"          : {"mirror": True},
-    "/api/v1/meeting/constraint/"                  : {"mirror": True},
-    "/api/v1/meeting/floorplan/"                   : {"mirror": True},
-    "/api/v1/meeting/importantdate/"               : {"mirror": True},
-    "/api/v1/meeting/meeting/"                     : {"mirror": True},
-    "/api/v1/meeting/meetinghost/"                 : {"mirror": True},
-    "/api/v1/meeting/proceedingsmaterial/"         : {"mirror": True},
-    "/api/v1/meeting/resourceassociation/"         : {"mirror": True},
-    "/api/v1/meeting/room/"                        : {"mirror": True},
-    "/api/v1/meeting/schedtimesessassignment/"     : {"mirror": True},
-    "/api/v1/meeting/schedule/"                    : {"mirror": True},
-    "/api/v1/meeting/schedulingevent/"             : {"mirror": True},
-    "/api/v1/meeting/session/"                     : {"mirror": True},
-    "/api/v1/meeting/sessionpresentation/"         : {"mirror": True},
-    "/api/v1/meeting/slidesubmission/"             : {"mirror": True},
-    "/api/v1/meeting/timeslot/"                    : {"mirror": True},
-    "/api/v1/meeting/urlresource/"                 : {"mirror": True},
-    "/api/v1/message/announcementfrom/"            : {"mirror": False}, # Not useful with other messages unavailable
-    "/api/v1/message/message/"                     : {"mirror": False}, # No longer available
-    "/api/v1/message/messageattachment/"           : {"mirror": False}, # No longer available
-    "/api/v1/message/sendqueue/"                   : {"mirror": False}, # No longer available
-    "/api/v1/name/agendafiltertypename/"           : {"mirror": True},
-    "/api/v1/name/agendatypename/"                 : {"mirror": True},
-    "/api/v1/name/appealartifacttypename/"         : {"mirror": True},
-    "/api/v1/name/ballotpositionname/"             : {"mirror": True},
-    "/api/v1/name/constraintname/"                 : {"mirror": True},
-    "/api/v1/name/continentname/"                  : {"mirror": True},
-    "/api/v1/name/countryname/"                    : {"mirror": True},
-    "/api/v1/name/dbtemplatetypename/"             : {"mirror": True},
-    "/api/v1/name/docrelationshipname/"            : {"mirror": True},
-    "/api/v1/name/docremindertypename/"            : {"mirror": True},
-    "/api/v1/name/doctagname/"                     : {"mirror": True},
-    "/api/v1/name/doctypename/"                    : {"mirror": True},
-    "/api/v1/name/docurltagname/"                  : {"mirror": True},
-    "/api/v1/name/draftsubmissionstatename/"       : {"mirror": True},
-    "/api/v1/name/extresourcename/"                : {"mirror": True},
-    "/api/v1/name/extresourcetypename/"            : {"mirror": True},
-    "/api/v1/name/feedbacktypename/"               : {"mirror": True},
-    "/api/v1/name/formallanguagename/"             : {"mirror": True},
-    "/api/v1/name/groupmilestonestatename/"        : {"mirror": True},
-    "/api/v1/name/groupstatename/"                 : {"mirror": True},
-    "/api/v1/name/grouptypename/"                  : {"mirror": True},
-    "/api/v1/name/importantdatename/"              : {"mirror": True},
-    "/api/v1/name/intendedstdlevelname/"           : {"mirror": True},
-    "/api/v1/name/iprdisclosurestatename/"         : {"mirror": True},
-    "/api/v1/name/ipreventtypename/"               : {"mirror": True},
-    "/api/v1/name/iprlicensetypename/"             : {"mirror": True},
-    "/api/v1/name/liaisonstatementeventtypename/"  : {"mirror": True},
-    "/api/v1/name/liaisonstatementpurposename/"    : {"mirror": True},
-    "/api/v1/name/liaisonstatementstate/"          : {"mirror": True},
-    "/api/v1/name/liaisonstatementtagname/"        : {"mirror": True},
-    "/api/v1/name/meetingtypename/"                : {"mirror": True},
-    "/api/v1/name/nomineepositionstatename/"       : {"mirror": True},
-    "/api/v1/name/proceedingsmaterialtypename/"    : {"mirror": True},
-    "/api/v1/name/reviewassignmentstatename/"      : {"mirror": True},
-    "/api/v1/name/reviewerqueuepolicyname/"        : {"mirror": True},
-    "/api/v1/name/reviewrequeststatename/"         : {"mirror": True},
-    "/api/v1/name/reviewresultname/"               : {"mirror": True},
-    "/api/v1/name/reviewtypename/"                 : {"mirror": True},
-    "/api/v1/name/rolename/"                       : {"mirror": True},
-    "/api/v1/name/roomresourcename/"               : {"mirror": True},
-    "/api/v1/name/sessionpurposename/"             : {"mirror": True},
-    "/api/v1/name/sessionstatusname/"              : {"mirror": True},
-    "/api/v1/name/slidesubmissionstatusname/"      : {"mirror": True},
-    "/api/v1/name/stdlevelname/"                   : {"mirror": True},
-    "/api/v1/name/streamname/"                     : {"mirror": True},
-    "/api/v1/name/telechatagendasectionname/"      : {"mirror": True},
-    "/api/v1/name/timerangename/"                  : {"mirror": True},
-    "/api/v1/name/timeslottypename/"               : {"mirror": True},
-    "/api/v1/name/topicaudiencename/"              : {"mirror": True},
-    "/api/v1/nomcom/feedback/"                     : {"mirror": False}, # Not available in the public API
-    "/api/v1/nomcom/feedbacklastseen/"             : {"mirror": False}, # Not useful
-    "/api/v1/nomcom/nomcom/"                       : {"mirror": False},
-    "/api/v1/nomcom/nomination/"                   : {"mirror": True},
-    "/api/v1/nomcom/nominee/"                      : {"mirror": True},
-    "/api/v1/nomcom/nomineeposition/"              : {"mirror": True},
-    "/api/v1/nomcom/position/"                     : {"mirror": True},
-    "/api/v1/nomcom/reminderdates/"                : {"mirror": True},
-    "/api/v1/nomcom/topic/"                        : {"mirror": True},
-    "/api/v1/nomcom/topicfeedbacklastseen/"        : {"mirror": True},
-    "/api/v1/nomcom/volunteer/"                    : {"mirror": True},
-    "/api/v1/person/alias/"                        : {"mirror": True},
-    "/api/v1/person/email/"                        : {"mirror": True},
-    "/api/v1/person/historicalemail/"              : {"mirror": True},
-    "/api/v1/person/historicalperson/"             : {"mirror": True},
-    "/api/v1/person/person/"                       : {"mirror": True},
-    "/api/v1/person/personalapikey/"               : {"mirror": False}, # Unavailable in the public datatracker API
-    "/api/v1/person/personapikeyevent/"            : {"mirror": False}, # Not useful: a record of datatracker login events
-    "/api/v1/person/personevent/"                  : {"mirror": False}, # Not useful: a record of datatracker login events
-    "/api/v1/person/personextresource/"            : {"mirror": True},
-    "/api/v1/redirects/command/"                   : {"mirror": False}, # Not useful
-    "/api/v1/redirects/redirect/"                  : {"mirror": False}, # Not useful
-    "/api/v1/redirects/suffix/"                    : {"mirror": False}, # Not useful
-    "/api/v1/review/historicalreviewassignment/"   : {"mirror": True},
-    "/api/v1/review/historicalreviewersettings/"   : {"mirror": True},
-    "/api/v1/review/historicalreviewrequest/"      : {"mirror": True},
-    "/api/v1/review/historicalunavailableperiod/"  : {"mirror": False}, # This endpoint seems to throw errors
-    "/api/v1/review/nextreviewerinteam/"           : {"mirror": True},
-    "/api/v1/review/reviewassignment/"             : {"mirror": True},
-    "/api/v1/review/reviewersettings/"             : {"mirror": True},
-    "/api/v1/review/reviewrequest/"                : {"mirror": True},
-    "/api/v1/review/reviewsecretarysettings/"      : {"mirror": True},
-    "/api/v1/review/reviewteamsettings/"           : {"mirror": True},
-    "/api/v1/review/reviewwish/"                   : {"mirror": True},
-    "/api/v1/review/unavailableperiod/"            : {"mirror": True},
-    "/api/v1/stats/affiliationalias/"              : {"mirror": True},
-    "/api/v1/stats/affiliationignoredending/"      : {"mirror": True},
-    "/api/v1/stats/countryalias/"                  : {"mirror": True},
-    "/api/v1/stats/meetingregistration/"           : {"mirror": True},
-    "/api/v1/submit/preapproval/"                  : {"mirror": True},
-    "/api/v1/submit/submission/"                   : {"mirror": True},
-    "/api/v1/submit/submissioncheck/"              : {"mirror": True},
-    "/api/v1/submit/submissionemailevent/"         : {"mirror": True},
-    "/api/v1/submit/submissionevent/"              : {"mirror": True},
-    "/api/v1/submit/submissionextresource/"        : {"mirror": True},
-    "/api/v1/utils/dumpinfo/"                      : {"mirror": False}, # Unused in the datatracker
-    "/api/v1/utils/versioninfo/"                   : {"mirror": True},
+    "/api/v1/community/communitylist/"             : {"mirror": False, "uri_col": None}, # Not clear what this is
+    "/api/v1/community/emailsubscription/"         : {"mirror": False, "uri_col": None}, # Not clear what this is
+    "/api/v1/community/searchrule/"                : {"mirror": False, "uri_col": None}, # Not clear what this is
+    "/api/v1/dbtemplate/dbtemplate/"               : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/addedmessageevent/"               : {"mirror": False, "uri_col": None}, # Unused in the datatracker
+    "/api/v1/doc/ballotdocevent/"                  : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/ballotpositiondocevent/"          : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/ballottype/"                      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/bofreqeditordocevent/"            : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/bofreqresponsibledocevent/"       : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/consensusdocevent/"               : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/deletedevent/"                    : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/docevent/"                        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/docextresource/"                  : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/dochistory/"                      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/dochistoryauthor/"                : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/docreminder/"                     : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/document/"                        : {"mirror": True,  "uri_col": "name"},
+    "/api/v1/doc/documentactionholder/"            : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/documentauthor/"                  : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/documenturl/"                     : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/editedauthorsdocevent/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/ianaexpertdocevent/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/initialreviewdocevent/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/irsgballotdocevent/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/lastcalldocevent/"                : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/newrevisiondocevent/"             : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/relateddochistory/"               : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/relateddocument/"                 : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/reviewassignmentdocevent/"        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/reviewrequestdocevent/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/state/"                           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/statedocevent/"                   : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/statetype/"                       : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/doc/submissiondocevent/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/telechatdocevent/"                : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/doc/writeupdocevent/"                 : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/appeal/"                        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/appealartifact/"                : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/changestategroupevent/"         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/group/"                         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/groupevent/"                    : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/groupextresource/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/groupfeatures/"                 : {"mirror": False, "uri_col": None},
+    "/api/v1/group/grouphistory/"                  : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/groupmilestone/"                : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/groupmilestonehistory/"         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/groupstatetransitions/"         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/groupurl/"                      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/milestonegroupevent/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/role/"                          : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/group/rolehistory/"                   : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/iesg/telechat/"                       : {"mirror": False, "uri_col": None}, # Not available in public API
+    "/api/v1/iesg/telechatagendacontent/"          : {"mirror": False, "uri_col": None}, # Not available in public API
+    "/api/v1/iesg/telechatagendaitem/"             : {"mirror": False, "uri_col": None}, # Not available in public API
+    "/api/v1/iesg/telechatdate/"                   : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/ipr/genericiprdisclosure/"            : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/ipr/holderiprdisclosure/"             : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/ipr/iprdisclosurebase/"               : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/ipr/iprdocrel/"                       : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/ipr/iprevent/"                        : {"mirror": False, "uri_col": None}, # Unused in datatracker
+    "/api/v1/ipr/legacymigrationiprevent/"         : {"mirror": False, "uri_col": None}, # Unused in datatracker
+    "/api/v1/ipr/nondocspecificiprdisclosure/"     : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/ipr/relatedipr/"                      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/ipr/thirdpartyiprdisclosure/"         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/liaisons/liaisonstatement/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/liaisons/liaisonstatementattachment/" : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/liaisons/liaisonstatementevent/"      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/liaisons/relatedliaisonstatement/"    : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/mailinglists/allowlisted/"            : {"mirror": False, "uri_col": None}, # Not available in public API
+    "/api/v1/mailinglists/list/"                   : {"mirror": False, "uri_col": None}, # Not available in public API
+    "/api/v1/mailinglists/nonwgmailinglist/"       : {"mirror": False, "uri_col": None}, # Not available in public API
+    "/api/v1/mailinglists/subscribed/"             : {"mirror": False, "uri_col": None}, # Not available in public API
+    "/api/v1/mailtrigger/mailtrigger/"             : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/mailtrigger/recipient/"               : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/meeting/attended/"                    : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/businessconstraint/"          : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/meeting/constraint/"                  : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/floorplan/"                   : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/importantdate/"               : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/meeting/"                     : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/meetinghost/"                 : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/proceedingsmaterial/"         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/resourceassociation/"         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/room/"                        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/schedtimesessassignment/"     : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/schedule/"                    : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/schedulingevent/"             : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/session/"                     : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/sessionpresentation/"         : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/slidesubmission/"             : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/timeslot/"                    : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/meeting/urlresource/"                 : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/message/announcementfrom/"            : {"mirror": False, "uri_col": None}, # Not useful with other messages unavailable
+    "/api/v1/message/message/"                     : {"mirror": False, "uri_col": None}, # No longer available
+    "/api/v1/message/messageattachment/"           : {"mirror": False, "uri_col": None}, # No longer available
+    "/api/v1/message/sendqueue/"                   : {"mirror": False, "uri_col": None}, # No longer available
+    "/api/v1/name/agendafiltertypename/"           : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/agendatypename/"                 : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/appealartifacttypename/"         : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/ballotpositionname/"             : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/constraintname/"                 : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/continentname/"                  : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/countryname/"                    : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/dbtemplatetypename/"             : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/docrelationshipname/"            : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/docremindertypename/"            : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/doctagname/"                     : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/doctypename/"                    : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/docurltagname/"                  : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/draftsubmissionstatename/"       : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/extresourcename/"                : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/extresourcetypename/"            : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/feedbacktypename/"               : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/formallanguagename/"             : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/groupmilestonestatename/"        : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/groupstatename/"                 : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/grouptypename/"                  : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/importantdatename/"              : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/intendedstdlevelname/"           : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/iprdisclosurestatename/"         : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/ipreventtypename/"               : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/iprlicensetypename/"             : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/liaisonstatementeventtypename/"  : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/liaisonstatementpurposename/"    : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/liaisonstatementstate/"          : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/liaisonstatementtagname/"        : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/meetingtypename/"                : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/nomineepositionstatename/"       : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/proceedingsmaterialtypename/"    : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/reviewassignmentstatename/"      : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/reviewerqueuepolicyname/"        : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/reviewrequeststatename/"         : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/reviewresultname/"               : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/reviewtypename/"                 : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/rolename/"                       : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/roomresourcename/"               : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/sessionpurposename/"             : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/sessionstatusname/"              : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/slidesubmissionstatusname/"      : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/stdlevelname/"                   : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/streamname/"                     : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/telechatagendasectionname/"      : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/timerangename/"                  : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/timeslottypename/"               : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/name/topicaudiencename/"              : {"mirror": True,  "uri_col": "slug"},
+    "/api/v1/nomcom/feedback/"                     : {"mirror": False, "uri_col": None}, # Not available in the public API
+    "/api/v1/nomcom/feedbacklastseen/"             : {"mirror": False, "uri_col": None}, # Not useful
+    "/api/v1/nomcom/nomcom/"                       : {"mirror": False, "uri_col": None},
+    "/api/v1/nomcom/nomination/"                   : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/nomcom/nominee/"                      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/nomcom/nomineeposition/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/nomcom/position/"                     : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/nomcom/reminderdates/"                : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/nomcom/topic/"                        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/nomcom/topicfeedbacklastseen/"        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/nomcom/volunteer/"                    : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/person/alias/"                        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/person/email/"                        : {"mirror": True,  "uri_col": "address"},
+    "/api/v1/person/historicalemail/"              : {"mirror": True,  "uri_col": "history_id"},
+    "/api/v1/person/historicalperson/"             : {"mirror": True,  "uri_col": "history_id"},
+    "/api/v1/person/person/"                       : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/person/personalapikey/"               : {"mirror": False, "uri_col": None}, # Unavailable in the public datatracker API
+    "/api/v1/person/personapikeyevent/"            : {"mirror": False, "uri_col": None}, # Not useful: a record of datatracker login events
+    "/api/v1/person/personevent/"                  : {"mirror": False, "uri_col": None}, # Not useful: a record of datatracker login events
+    "/api/v1/person/personextresource/"            : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/redirects/command/"                   : {"mirror": False, "uri_col": None}, # Not useful
+    "/api/v1/redirects/redirect/"                  : {"mirror": False, "uri_col": None}, # Not useful
+    "/api/v1/redirects/suffix/"                    : {"mirror": False, "uri_col": None}, # Not useful
+    "/api/v1/review/historicalreviewassignment/"   : {"mirror": True,  "uri_col": "history_id"},
+    "/api/v1/review/historicalreviewersettings/"   : {"mirror": True,  "uri_col": "history_id"},
+    "/api/v1/review/historicalreviewrequest/"      : {"mirror": True,  "uri_col": "history_id"},
+    "/api/v1/review/historicalunavailableperiod/"  : {"mirror": False, "uri_col": None}, # This endpoint seems to throw errors
+    "/api/v1/review/nextreviewerinteam/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/review/reviewassignment/"             : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/review/reviewersettings/"             : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/review/reviewrequest/"                : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/review/reviewsecretarysettings/"      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/review/reviewteamsettings/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/review/reviewwish/"                   : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/review/unavailableperiod/"            : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/stats/affiliationalias/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/stats/affiliationignoredending/"      : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/stats/countryalias/"                  : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/stats/meetingregistration/"           : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/submit/preapproval/"                  : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/submit/submission/"                   : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/submit/submissioncheck/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/submit/submissionemailevent/"         : {"mirror": False, "uri_col": None}, # Unused in the datatracker
+    "/api/v1/submit/submissionevent/"              : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/submit/submissionextresource/"        : {"mirror": True,  "uri_col": "id"},
+    "/api/v1/utils/dumpinfo/"                      : {"mirror": False, "uri_col": None}, # Unused in the datatracker
+    "/api/v1/utils/versioninfo/"                   : {"mirror": True,  "uri_col": "id"},
 }
 
 
@@ -323,8 +323,23 @@ def create_db_table(db_cursor, schemas, endpoint):
         elif column['type'] == "to_one": 
             # We handle to_one references by resource_uri
             foreign_table = schema["to_one"][column["name"]]["refers_to_table"]
-            foreign.append(f"  FOREIGN KEY (\"{column['name']}\") REFERENCES {foreign_table} (\"resource_uri\")")
-            column_sql = f"  \"{column['name']}\" TEXT"
+            foreign_endpt = schema["to_one"][column["name"]]["refers_to_endpoint"]
+            foreign_col   = endpoints_to_mirror[foreign_endpt]['uri_col']
+            if foreign_endpt in schemas:
+                    foreign_type  = schemas[foreign_endpt]["columns"][foreign_col]["type"]
+                    foreign.append(f"  FOREIGN KEY (\"{column['name']}\") REFERENCES {foreign_table} (\"{foreign_col}\")")
+                    if foreign_type == "string" or foreign_type == "datetime" or foreign_type == "date" or foreign_type == "timedelta":
+                            column_sql  = f"  \"{column['name']}\" TEXT"
+                    elif foreign_type == "integer" or foreign_type == "boolen":
+                            column_sql  = f"  \"{column['name']}\" INTEGER"
+                    else:
+                            print(f"Unknown foreign type {foreign_type}")
+                            sys.exit(1)
+            else:
+                    # The foreign endpoint is not one we mirror. Just store the content as text.
+                    # e.g., /api/v1/nomcom/nomination/ refers to /api/v1/nomcom/feedback/'
+                    column['type'] = "string"
+                    column_sql = f"  \"{column['name']}\" TEXT"
         elif column['type'] == "to_many": 
             foreign_table  = schema["to_many"][column["name"]]["refers_to_table"]
             column_current = schema['table'].split('_')[-1]
@@ -347,10 +362,7 @@ def create_db_table(db_cursor, schemas, endpoint):
 
         if column["unique"]:
             column_sql += " UNIQUE"
-        # We ignore the primary key specified in the schema, and use the
-        # datatracker resource_uri as the primary key. This simplifies
-        # handling to_one references.
-        if column["name"] == "resource_uri":
+        if column["name"] == schema["primary_key"]:
             column_sql += " PRIMARY KEY"
         columns.append(column_sql)
     sql = f"CREATE TABLE {schema['table']} (\n"
@@ -406,7 +418,10 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
                     dt_fmt = dt_val.astimezone(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
                     values.append(dt_fmt)
             elif column['type'] == "to_one": 
-                values.append(item[column["name"]])
+                    if item[column["name"]] is None:
+                        values.append(None)
+                    else:
+                        values.append(item[column["name"]].split("/")[-2])
             elif column['type'] == "to_many": 
                 column_current = schema['table'].split('_')[-1]
                 column_foreign = column['name']
