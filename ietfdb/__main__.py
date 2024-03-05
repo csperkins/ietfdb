@@ -326,6 +326,8 @@ def create_db_table(db_cursor, schemas, endpoint):
     columns = []
     foreign = []
     for column in schema["columns"].values():
+        if column["name"] == "resource_uri":
+            continue
         if column['type'] == "string" or column['type'] == "datetime" or column['type'] == "date" or column['type'] == "timedelta":
             column_sql = f"  \"{column['name']}\" TEXT"
         elif column['type'] == "integer" or column['type'] == "boolean": 
@@ -364,8 +366,6 @@ def create_db_table(db_cursor, schemas, endpoint):
 
         if column["unique"]:
             column_sql += " UNIQUE"
-        #if column["name"] == schema["primary_key"]:
-        #    column_sql += " PRIMARY KEY"
         if column["name"] == endpoints_to_mirror[endpoint]['uri_col']:
             column_sql += " PRIMARY KEY"
         columns.append(column_sql)
@@ -376,7 +376,8 @@ def create_db_table(db_cursor, schemas, endpoint):
         sql += ",\n".join(foreign)
     sql += "\n);\n"
     db_cursor.execute(sql)
-    sql = f"CREATE INDEX index_{schema['table']} ON {schema['table']}(resource_uri)"
+    uri_col = endpoints_to_mirror[endpoint]['uri_col']
+    sql = f"CREATE UNIQUE INDEX index_{schema['table']}_{uri_col} ON {schema['table']}(\"{uri_col}\")"
     db_cursor.execute(sql)
 
 
@@ -390,6 +391,8 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
     for column in schema["columns"].values():
         if column['name'] == schema['sort_by']:
             ordered = True
+        elif column['name'] == "resource_uri":
+            continue
         if column['type'] in ["string", "date", "datetime", "timedelta", "integer", "boolean", "to_one"]: 
             vcount += 1
         elif column['type'] == "to_many": 
@@ -411,6 +414,8 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
         #print(f"  {item['resource_uri']}")
         values = []
         for column in schema["columns"].values():
+            if column["name"] == "resource_uri":
+                continue
             if column['type'] in ["string", "integer", "boolean", "date", "timedelta"]:
                 values.append(item[column["name"]])
             elif column['type'] == "datetime": 
