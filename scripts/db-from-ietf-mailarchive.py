@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+#
+# Copyright (c) 2023-2024 Colin Perkins
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import datetime
+import json
+import os
+import sys
+import sqlite3
+import time
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from email              import policy, utils
+from email.parser       import BytesParser
+from email.message      import Message
+from email.utils        import parseaddr, parsedate_to_datetime
+from imapclient         import IMAPClient
+from pathlib            import Path
+
+# =================================================================================================
+# Helper functions
+
+def fetch_folder(folder_name, archive_dir):
+    # Create a new connection to the IMAP server for this thread:
+    imap = IMAPClient(host='imap.ietf.org', ssl=True, use_uid=True)
+    imap.login("anonymous", "anonymous")
+
+    _, _, imap_ns_shared = imap.namespace()
+    imap_prefix    = imap_ns_shared[0][0]
+    imap_separator = imap_ns_shared[0][1]
+
+    folder_info = imap.select_folder(folder_name, readonly=True)
+
+    modified = False
+    # Fetch new messages:
+    for msg_id in imap.search(['NOT', 'DELETED']):
+        folder_path = Path(f"{archive_dir}/{folder_name[len(imap_prefix):]}")
+        msg_path    = Path(folder_path / f"{msg_id}.eml")  # FIXME: zero-prefixed?
+        if not msg_path.exists():
+            msg = imap.fetch(msg_id, ["RFC822"])
+            if msg == {}:
+                print(f"  {msg_path} is unavailable")
+            else:
+                tmp_path = msg_path.with_suffix(".tmp")
+                assert b'RFC822' in msg[msg_id]
+                with open(tmp_path, "wb") as outf:
+                    outf.write(msg[msg_id][b"RFC822"])
+                tmp_path.replace(msg_path)
+                print(f"  {msg_path}")
+                modified = True
+
+    # Save metadata:
+    folder_path = Path(f"{archive_dir}/{folder_name[len(imap_prefix):]}")
+    folder_path.mkdir(parents=True, exist_ok=True)
+    meta_path = folder_path / "meta.json" 
+    with open(meta_path, "w") as outf:
+        folder = {}
+        folder["name"]        = folder_name
+        folder["uidvalidity"] = folder_info[b'UIDVALIDITY']
+        folder["uidnext"]     = folder_info[b'UIDNEXT']
+        json.dump(folder, outf, indent=2)
+
+    return modified
+
+
+def download_all(archive_dir):
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        # Login to the IETF mail archive using IMAP:
+        imap = IMAPClient(host='imap.ietf.org', ssl=True, use_uid=True)
+        imap.login("anonymous", "anonymous")
+
+        _, _, imap_ns_shared = imap.namespace()
+        imap_prefix    = imap_ns_shared[0][0]
+        imap_separator = imap_ns_shared[0][1]
+        folder_list    = imap.list_folders()
+
+        # tasks = {}
+        # for flags, delimiter, name in folder_list:
+        #     if b'\\Noselect' in flags:
+        #         continue
+        #     
+        #     # Load current folder metadata:
+        #     folder_info = imap.select_folder(name, readonly=True)
+        #     folder = {}
+        #     folder["name"]        = name
+        #     folder["uidvalidity"] = folder_info[b'UIDVALIDITY']
+        #     folder["uidnext"]     = folder_info[b'UIDNEXT']
+        # 
+        #     # Load previous folder metadata:
+        #     folder_path = Path(f"{archive_dir}/{name[len(imap_prefix):]}")
+        #     folder_path.mkdir(parents=True, exist_ok=True)
+        # 
+        #     print(f"  {folder_path}")
+        # 
+        #     meta_path = folder_path / "meta.json" 
+        #     if meta_path.exists():
+        #         with open(meta_path, "r") as inf:
+        #             prev_state = json.load(inf)
+        #     else:
+        #         prev_state = {}
+        #         prev_state["name"]        = name
+        #         prev_state["uidvalidity"] = None
+        #         prev_state["uidnext"]     = None
+        # 
+        #     # Do we need to update this folder?
+        #     clean = False
+        #     fetch = False
+        #     if folder["uidvalidity"] != prev_state["uidvalidity"]:
+        #         clean = True
+        #         fetch = True
+        #     if folder["uidnext"] != prev_state["uidnext"]:
+        #         fetch = True
+        # 
+        #     if clean:
+        #         print(f"WARNING: UIDVALIDITY changed {name}")
+        #         for msg_path in sorted(folder_path.glob("*.eml")):
+        #             print(f"  {msg_path} removed")
+        #             msg_path.unlink()
+        #         if meta_path.exists():
+        #             print(f"  {meta_path} removed")
+        #             meta_path.unlink()
+        # 
+        #     if fetch:
+        #         future = executor.submit(fetch_folder, name, archive_dir)
+        #         tasks[future] = name
+        # 
+        # # We need to join with the threads as they complete and evaluate
+        # # the result of the future to ensure exceptions are propagated.
+        # modified = False
+        # for future in as_completed(tasks):
+        #     modified |= future.result()
+
+        return folder_list
+
+
+# =================================================================================================
+# Main code follows:
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+if len(sys.argv) != 3:
+    print("Usage: scripts/db-from-ietf-mailarchive.py <database.db> <mailarchive_dir>")
+    sys.exit(1)
+
+database_file = sys.argv[1]
+archive_dir   = sys.argv[2]
+
+folder_list = download_all(archive_dir)
+
+db_connection = sqlite3.connect("ietf-ma.db")
+db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file between writes
+db_cursor = db_connection.cursor()
+
+sql =  f"CREATE TABLE ietf_ma_lists (\n"
+sql += f"  name         TEXT NOT NULL PRIMARY KEY,\n"
+sql += f"  msg_count INTEGER,\n"
+sql += f"  first_date   TEXT,\n"
+sql += f"  last_date    TEXT\n"
+sql += ");\n"
+db_cursor.execute(sql)
+
+sql =  f"CREATE TABLE ietf_ma_messages (\n"
+sql += f"  id             TEXT NOT NULL PRIMARY KEY,\n"
+sql += f"  mailing_list   TEXT NOT NULL,\n"
+sql += f"  uidvalidity INTEGER NOT NULL,\n"
+sql += f"  uid         INTEGER NOT NULL,\n"
+sql += f"  from_name      TEXT,\n"
+sql += f"  from_addr      TEXT,\n"
+sql += f"  subject        TEXT,\n"
+sql += f"  date           TEXT,\n"
+sql += f"  date_unparsed  TEXT,\n"
+sql += f"  message_id     TEXT,\n"
+sql += f"  FOREIGN KEY (mailing_list) REFERENCES ietf_ma_lists (name)\n"
+sql += ");\n"
+db_cursor.execute(sql)
+
+err_count = 0
+tot_count = 0
+
+print("Populating database:")
+for imap_flags, imap_delimiter, imap_folder in folder_list:
+    if b'\\Noselect' in imap_flags:
+        continue
+    folder_name = imap_folder.split(imap_delimiter.decode("utf-8"))[-1]
+    folder_path = f"{archive_dir}/{folder_name}"
+
+    print(f"   {folder_name}")
+    
+    with open(f"{folder_path}/meta.json", "r") as inf:
+        meta = json.load(inf)
+
+    msg_count = 0
+    first_date = "2038-01-19 03:14:07"
+    final_date = "1970-01-01 00:00:00"
+    for msg_path in sorted(Path(folder_path).glob("*.eml")):
+        tot_count += 1
+        msg_count += 1
+        with open(msg_path, "rb") as inf:
+            msg = BytesParser(policy=policy.default).parse(inf)
+            uidvalidity    = int(meta["uidvalidity"])
+            uid            = int(msg_path.stem)
+            mid            = f"{folder_name}/{uidvalidity}/{uid:06}"
+            hdr_from_name  = None
+            hdr_from_addr  = None
+            hdr_subject    = None
+            hdr_date       = None
+            hdr_message_id = None
+            parsed_date    = None
+            try:
+                hdr_from       = msg["from"]
+                hdr_from_name, hdr_from_addr = parseaddr(hdr_from)
+                hdr_subject    = msg["subject"]
+                hdr_date       = msg["date"]
+                hdr_message_id = msg["message-id"]
+                parsed_date    = parsedate_to_datetime(hdr_date).astimezone(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                print(f"ERROR: cannot parse headers for {msg_path}")
+                err_count += 1
+            val = (mid,
+                   folder_name,
+                   uidvalidity,
+                   uid,
+                   hdr_from_name,
+                   hdr_from_addr,
+                   hdr_subject,
+                   parsed_date,
+                   hdr_date,
+                   hdr_message_id)
+            sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            db_cursor.execute(sql, val)
+
+            if parsed_date is not None and parsed_date > final_date:
+                final_date = parsed_date
+            if parsed_date is not None and parsed_date < first_date:
+                first_date = parsed_date
+
+    db_connection.commit()
+
+    # FIXME: can this be a virtual table calculated by the database?
+    val = (folder_name, msg_count, first_date, final_date)
+    sql = f"INSERT INTO ietf_ma_lists VALUES (?, ?, ?, ?)"
+    db_cursor.execute(sql, val)
+    db_connection.commit()
+
+print("Vacuuming database")
+db_connection.execute('VACUUM;') # Don't force fsync on the file between writes
+
+
+print(f"Could not parse header for {err_count} messages out of {tot_count}")
+
