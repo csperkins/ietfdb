@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # Copyright (c) 2023-2024 Colin Perkins
 #
 # Redistribution and use in source and binary forms, with or without
