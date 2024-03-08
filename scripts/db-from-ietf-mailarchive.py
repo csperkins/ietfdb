@@ -173,15 +173,15 @@ db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file
 db_cursor = db_connection.cursor()
 
 sql =  f"CREATE TABLE ietf_ma_lists (\n"
-sql += f"  name         TEXT NOT NULL PRIMARY KEY,\n"
-sql += f"  msg_count INTEGER,\n"
-sql += f"  first_date   TEXT,\n"
-sql += f"  last_date    TEXT\n"
+sql += f"  name       TEXT NOT NULL PRIMARY KEY,\n"
+sql += f"  msg_count  INTEGER,\n"
+sql += f"  first_date TEXT,\n"
+sql += f"  last_date  TEXT\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
 sql =  f"CREATE TABLE ietf_ma_messages (\n"
-sql += f"  id             TEXT NOT NULL PRIMARY KEY,\n"
+sql += f"  id             INTEGER PRIMARY KEY,\n"
 sql += f"  mailing_list   TEXT NOT NULL,\n"
 sql += f"  uidvalidity INTEGER NOT NULL,\n"
 sql += f"  uid         INTEGER NOT NULL,\n"
@@ -191,9 +191,39 @@ sql += f"  subject        TEXT,\n"
 sql += f"  date           TEXT,\n"
 sql += f"  date_unparsed  TEXT,\n"
 sql += f"  message_id     TEXT,\n"
+sql += f"  in_reply_to    TEXT,\n"
 sql += f"  FOREIGN KEY (mailing_list) REFERENCES ietf_ma_lists (name)\n"
 sql += ");\n"
 db_cursor.execute(sql)
+
+sql = f"CREATE INDEX index_ietf_ma_messages_from_addr   ON ietf_ma_messages(from_addr);\n"
+db_cursor.execute(sql)
+sql = f"CREATE INDEX index_ietf_ma_messages_message_id  ON ietf_ma_messages(message_id);\n"
+db_cursor.execute(sql)
+sql = f"CREATE INDEX index_ietf_ma_messages_in_reply_to ON ietf_ma_messages(in_reply_to);\n"
+db_cursor.execute(sql)
+
+sql =  f"CREATE TABLE ietf_ma_messages_to (\n"
+sql += f"  id      INTEGER PRIMARY KEY,\n"
+sql += f"  message INTEGER,\n"
+sql += f"  to_name TEXT,\n"
+sql += f"  to_addr TEXT,\n"
+sql += f"  FOREIGN KEY (message) REFERENCES ietf_ma_messages (id)\n"
+sql += ");\n"
+db_cursor.execute(sql)
+
+
+
+sql =  f"CREATE TABLE ietf_ma_messages_cc (\n"
+sql += f"  id      INTEGER PRIMARY KEY,\n"
+sql += f"  message INTEGER,\n"
+sql += f"  cc_name TEXT,\n"
+sql += f"  cc_addr TEXT,\n"
+sql += f"  FOREIGN KEY (message) REFERENCES ietf_ma_messages (id)\n"
+sql += ");\n"
+db_cursor.execute(sql)
+
+
 
 err_count = 0
 tot_count = 0
@@ -218,26 +248,32 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
         msg_count += 1
         with open(msg_path, "rb") as inf:
             msg = BytesParser(policy=policy.default).parse(inf)
-            uidvalidity    = int(meta["uidvalidity"])
-            uid            = int(msg_path.stem)
-            mid            = f"{folder_name}/{uidvalidity}/{uid:06}"
-            hdr_from_name  = None
-            hdr_from_addr  = None
-            hdr_subject    = None
-            hdr_date       = None
-            hdr_message_id = None
-            parsed_date    = None
+            uidvalidity     = int(meta["uidvalidity"])
+            uid             = int(msg_path.stem)
+            hdr_from_name   = None
+            hdr_from_addr   = None
+            hdr_subject     = None
+            hdr_date        = None
+            hdr_message_id  = None
+            hdr_in_reply_to = None
+            parsed_date     = None
             try:
-                hdr_from       = msg["from"]
+                hdr_from        = msg["from"]
                 hdr_from_name, hdr_from_addr = parseaddr(hdr_from)
-                hdr_subject    = msg["subject"]
-                hdr_date       = msg["date"]
-                hdr_message_id = msg["message-id"]
-                parsed_date    = parsedate_to_datetime(hdr_date).astimezone(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
+                hdr_subject     = msg["subject"]
+                hdr_date        = msg["date"]
+                hdr_message_id  = msg["message-id"]
+                in_reply_to = msg["in-reply-to"]
+                references  = msg["references"]
+                if in_reply_to != "":
+                    hdr_in_reply_to = in_reply_to
+                elif references != "":
+                    hdr_in_reply_to = references.strip().split(" ")[-1]
+                parsed_date = parsedate_to_datetime(hdr_date).astimezone(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
             except:
                 print(f"ERROR: cannot parse headers for {msg_path}")
                 err_count += 1
-            val = (mid,
+            val = (tot_count,
                    folder_name,
                    uidvalidity,
                    uid,
@@ -246,9 +282,41 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                    hdr_subject,
                    parsed_date,
                    hdr_date,
-                   hdr_message_id)
-            sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                   hdr_message_id, 
+                   hdr_in_reply_to)
+            sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             db_cursor.execute(sql, val)
+
+
+            try:
+                if msg["to"] is not None:
+                    for to_hdr in msg["to"].strip().split(","):
+                        sql = f"INSERT INTO ietf_ma_messages_to VALUES (?, ?, ?, ?)"
+                        try:
+                            to_name, to_addr = parseaddr(to_hdr)
+                        except:
+                            print(f"ERROR: cannot parse \"To:\" header for {msg_path}")
+                            to_name = None
+                            to_addr = None
+                        db_cursor.execute(sql, (None, tot_count, to_name, to_addr))
+            except:
+                print(f"ERROR: malformed \"To:\" header for {msg_path}")
+
+
+            try:
+                if msg["cc"] is not None:
+                    for cc_hdr in msg["cc"].strip().split(","):
+                        sql = f"INSERT INTO ietf_ma_messages_cc VALUES (?, ?, ?, ?)"
+                        try:
+                            cc_name, cc_addr = parseaddr(cc_hdr)
+                        except:
+                            print(f"ERROR: cannot parse \"Cc:\" header for {msg_path}")
+                            cc_name = None
+                            cc_addr = None
+                        db_cursor.execute(sql, (None, tot_count, cc_name, cc_addr))
+            except:
+                print(f"ERROR: malformed \"Cc:\" header for {msg_path}")
+
 
             if parsed_date is not None and parsed_date > final_date:
                 final_date = parsed_date
