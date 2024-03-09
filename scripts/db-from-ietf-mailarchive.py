@@ -159,12 +159,24 @@ def download_all(archive_dir):
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-if len(sys.argv) != 3:
-    print("Usage: scripts/db-from-ietf-mailarchive.py <database.db> <mailarchive_dir>")
+usage = "Usage: scripts/db-from-ietf-mailarchive.py [--embed] <database.db> <mailarchive_dir>"
+
+if len(sys.argv) == 3:
+    database_file = sys.argv[1]
+    archive_dir   = sys.argv[2]
+    embed         = False
+elif len(sys.argv) == 4:
+    if sys.argv[1] == "--embed":
+        database_file = sys.argv[2]
+        archive_dir   = sys.argv[3]
+        embed         = True
+    else:
+        print(usage)
+        sys.exit(1)
+else:
+    print(usage)
     sys.exit(1)
 
-database_file = sys.argv[1]
-archive_dir   = sys.argv[2]
 
 folder_list = download_all(archive_dir)
 
@@ -181,10 +193,10 @@ sql += ");\n"
 db_cursor.execute(sql)
 
 sql =  f"CREATE TABLE ietf_ma_messages (\n"
-sql += f"  id             INTEGER PRIMARY KEY,\n"
+sql += f"  message_num    INTEGER PRIMARY KEY,\n"
 sql += f"  mailing_list   TEXT NOT NULL,\n"
-sql += f"  uidvalidity INTEGER NOT NULL,\n"
-sql += f"  uid         INTEGER NOT NULL,\n"
+sql += f"  uidvalidity    INTEGER NOT NULL,\n"
+sql += f"  uid            INTEGER NOT NULL,\n"
 sql += f"  from_name      TEXT,\n"
 sql += f"  from_addr      TEXT,\n"
 sql += f"  subject        TEXT,\n"
@@ -192,6 +204,7 @@ sql += f"  date           TEXT,\n"
 sql += f"  date_unparsed  TEXT,\n"
 sql += f"  message_id     TEXT,\n"
 sql += f"  in_reply_to    TEXT,\n"
+sql += f"  message        BLOB,\n"
 sql += f"  FOREIGN KEY (mailing_list) REFERENCES ietf_ma_lists (name)\n"
 sql += ");\n"
 db_cursor.execute(sql)
@@ -203,26 +216,25 @@ db_cursor.execute(sql)
 sql = f"CREATE INDEX index_ietf_ma_messages_in_reply_to ON ietf_ma_messages(in_reply_to);\n"
 db_cursor.execute(sql)
 
+
 sql =  f"CREATE TABLE ietf_ma_messages_to (\n"
-sql += f"  id      INTEGER PRIMARY KEY,\n"
-sql += f"  message INTEGER,\n"
-sql += f"  to_name TEXT,\n"
-sql += f"  to_addr TEXT,\n"
-sql += f"  FOREIGN KEY (message) REFERENCES ietf_ma_messages (id)\n"
+sql += f"  id          INTEGER PRIMARY KEY,\n"
+sql += f"  message_num INTEGER,\n"
+sql += f"  to_name     TEXT,\n"
+sql += f"  to_addr     TEXT,\n"
+sql += f"  FOREIGN KEY (message_num) REFERENCES ietf_ma_messages (message_num)\n"
 sql += ");\n"
 db_cursor.execute(sql)
-
 
 
 sql =  f"CREATE TABLE ietf_ma_messages_cc (\n"
-sql += f"  id      INTEGER PRIMARY KEY,\n"
-sql += f"  message INTEGER,\n"
-sql += f"  cc_name TEXT,\n"
-sql += f"  cc_addr TEXT,\n"
-sql += f"  FOREIGN KEY (message) REFERENCES ietf_ma_messages (id)\n"
+sql += f"  id          INTEGER PRIMARY KEY,\n"
+sql += f"  message_num INTEGER,\n"
+sql += f"  cc_name     TEXT,\n"
+sql += f"  cc_addr     TEXT,\n"
+sql += f"  FOREIGN KEY (message_num) REFERENCES ietf_ma_messages (message_num)\n"
 sql += ");\n"
 db_cursor.execute(sql)
-
 
 
 err_count = 0
@@ -246,6 +258,12 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
     for msg_path in sorted(Path(folder_path).glob("*.eml")):
         tot_count += 1
         msg_count += 1
+
+        if embed:
+            with open(msg_path, "rb") as inf:
+                message = inf.read()
+        else:
+            message = None
         with open(msg_path, "rb") as inf:
             msg = BytesParser(policy=policy.default).parse(inf)
             uidvalidity     = int(meta["uidvalidity"])
@@ -283,8 +301,9 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                    parsed_date,
                    hdr_date,
                    hdr_message_id, 
-                   hdr_in_reply_to)
-            sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                   hdr_in_reply_to,
+                   message)
+            sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             db_cursor.execute(sql, val)
 
 
