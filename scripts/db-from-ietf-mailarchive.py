@@ -73,7 +73,7 @@ def fetch_folder(folder_name, archive_dir):
     # Save metadata:
     folder_path = Path(f"{archive_dir}/{folder_name[len(imap_prefix):]}")
     folder_path.mkdir(parents=True, exist_ok=True)
-    meta_path = folder_path / "meta.json" 
+    meta_path = folder_path / "meta.json"
     with open(meta_path, "w") as outf:
         folder = {}
         folder["name"]        = folder_name
@@ -85,6 +85,7 @@ def fetch_folder(folder_name, archive_dir):
 
 
 def download_all(archive_dir):
+    print("Downloading messages:")
     with ThreadPoolExecutor(max_workers=16) as executor:
         # Login to the IETF mail archive using IMAP:
         imap = IMAPClient(host='imap.ietf.org', ssl=True, use_uid=True)
@@ -95,61 +96,61 @@ def download_all(archive_dir):
         imap_separator = imap_ns_shared[0][1]
         folder_list    = imap.list_folders()
 
-        # tasks = {}
-        # for flags, delimiter, name in folder_list:
-        #     if b'\\Noselect' in flags:
-        #         continue
-        #     
-        #     # Load current folder metadata:
-        #     folder_info = imap.select_folder(name, readonly=True)
-        #     folder = {}
-        #     folder["name"]        = name
-        #     folder["uidvalidity"] = folder_info[b'UIDVALIDITY']
-        #     folder["uidnext"]     = folder_info[b'UIDNEXT']
-        # 
-        #     # Load previous folder metadata:
-        #     folder_path = Path(f"{archive_dir}/{name[len(imap_prefix):]}")
-        #     folder_path.mkdir(parents=True, exist_ok=True)
-        # 
-        #     print(f"  {folder_path}")
-        # 
-        #     meta_path = folder_path / "meta.json" 
-        #     if meta_path.exists():
-        #         with open(meta_path, "r") as inf:
-        #             prev_state = json.load(inf)
-        #     else:
-        #         prev_state = {}
-        #         prev_state["name"]        = name
-        #         prev_state["uidvalidity"] = None
-        #         prev_state["uidnext"]     = None
-        # 
-        #     # Do we need to update this folder?
-        #     clean = False
-        #     fetch = False
-        #     if folder["uidvalidity"] != prev_state["uidvalidity"]:
-        #         clean = True
-        #         fetch = True
-        #     if folder["uidnext"] != prev_state["uidnext"]:
-        #         fetch = True
-        # 
-        #     if clean:
-        #         print(f"WARNING: UIDVALIDITY changed {name}")
-        #         for msg_path in sorted(folder_path.glob("*.eml")):
-        #             print(f"  {msg_path} removed")
-        #             msg_path.unlink()
-        #         if meta_path.exists():
-        #             print(f"  {meta_path} removed")
-        #             meta_path.unlink()
-        # 
-        #     if fetch:
-        #         future = executor.submit(fetch_folder, name, archive_dir)
-        #         tasks[future] = name
-        # 
-        # # We need to join with the threads as they complete and evaluate
-        # # the result of the future to ensure exceptions are propagated.
-        # modified = False
-        # for future in as_completed(tasks):
-        #     modified |= future.result()
+        tasks = {}
+        for flags, delimiter, name in folder_list:
+            if b'\\Noselect' in flags:
+                continue
+
+            # Load current folder metadata:
+            folder_info = imap.select_folder(name, readonly=True)
+            folder = {}
+            folder["name"]        = name
+            folder["uidvalidity"] = folder_info[b'UIDVALIDITY']
+            folder["uidnext"]     = folder_info[b'UIDNEXT']
+
+            # Load previous folder metadata:
+            folder_path = Path(f"{archive_dir}/{name[len(imap_prefix):]}")
+            folder_path.mkdir(parents=True, exist_ok=True)
+
+            print(f"  {folder_path}")
+
+            meta_path = folder_path / "meta.json"
+            if meta_path.exists():
+                with open(meta_path, "r") as inf:
+                    prev_state = json.load(inf)
+            else:
+                prev_state = {}
+                prev_state["name"]        = name
+                prev_state["uidvalidity"] = None
+                prev_state["uidnext"]     = None
+
+            # Do we need to update this folder?
+            clean = False
+            fetch = False
+            if folder["uidvalidity"] != prev_state["uidvalidity"]:
+                clean = True
+                fetch = True
+            if folder["uidnext"] != prev_state["uidnext"]:
+                fetch = True
+
+            if clean:
+                print(f"WARNING: UIDVALIDITY changed {name}")
+                for msg_path in sorted(folder_path.glob("*.eml")):
+                    print(f"  {msg_path} removed")
+                    msg_path.unlink()
+                if meta_path.exists():
+                    print(f"  {meta_path} removed")
+                    meta_path.unlink()
+
+            if fetch:
+                future = executor.submit(fetch_folder, name, archive_dir)
+                tasks[future] = name
+
+        # We need to join with the threads as they complete and evaluate
+        # the result of the future to ensure exceptions are propagated.
+        modified = False
+        for future in as_completed(tasks):
+            modified |= future.result()
 
         return folder_list
 
@@ -248,7 +249,7 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
     folder_path = f"{archive_dir}/{folder_name}"
 
     print(f"   {folder_name}")
-    
+
     with open(f"{folder_path}/meta.json", "r") as inf:
         meta = json.load(inf)
 
@@ -300,7 +301,7 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                    hdr_subject,
                    parsed_date,
                    hdr_date,
-                   hdr_message_id, 
+                   hdr_message_id,
                    hdr_in_reply_to,
                    message)
             sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
