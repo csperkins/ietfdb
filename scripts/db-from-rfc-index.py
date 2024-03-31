@@ -614,23 +614,40 @@ else:
 db_connection = sqlite3.connect(database_file)
 db_cursor = db_connection.cursor()
 
+
+db_tables = list(map(lambda x : x[0], db_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")))
+has_dt_tables = True
+for name in ["ietf_dt_name_streamname", "ietf_dt_group_group"]:
+    if name not in db_tables:
+        has_dt_tables = False
+
+if has_dt_tables:
+    print("Database has ietf_dt_* tables")
+
+
 sql =  f"CREATE TABLE ietf_ri_rfc (\n"
-sql += f"  doc_id       TEXT PRIMARY KEY,\n"
-sql += f"  title        TEXT NOT NULL,\n"
-sql += f"  doi          TEXT NOT NULL,\n"
-sql += f"  stream       TEXT NOT NULL,\n"
-sql += f"  wg           TEXT,\n"
-sql += f"  area         TEXT,\n"
-sql += f"  curr_status  TEXT,\n"
-sql += f"  publ_status  TEXT,\n"
-sql += f"  day          TEXT,\n"
-sql += f"  month        TEXT,\n"
-sql += f"  year         INTEGER,\n"
-sql += f"  draft        TEXT,\n"
-sql += f"  errata_url   TEXT,\n"
-sql += f"  is_also      TEXT,\n"
-sql += f"  abstract     TEXT,\n"
-sql += f"  FOREIGN KEY (is_also) REFERENCES ietf_ri_subseries (subseries_doc_id)\n"
+sql += f"  doc_id         TEXT PRIMARY KEY,\n"
+sql += f"  title          TEXT NOT NULL,\n"
+sql += f"  doi            TEXT NOT NULL,\n"
+sql += f"  stream         TEXT NOT NULL,\n"
+sql += f"  wg             TEXT,\n"
+sql += f"  area           TEXT,\n"
+sql += f"  curr_status    TEXT,\n"
+sql += f"  publ_status    TEXT,\n"
+sql += f"  day            TEXT,\n"
+sql += f"  month          TEXT,\n"
+sql += f"  year           INTEGER,\n"
+sql += f"  draft          TEXT,\n"
+sql += f"  draft_document TEXT,\n"
+sql += f"  errata_url     TEXT,\n"
+sql += f"  is_also        TEXT,\n"
+sql += f"  abstract       TEXT,\n"
+if has_dt_tables:
+    sql += f"  FOREIGN KEY (stream)         REFERENCES ietf_dt_name_streamname (slug),\n"
+    sql += f"  FOREIGN KEY (wg)             REFERENCES ietf_dt_group_group (acronym),\n"
+    sql += f"  FOREIGN KEY (area)           REFERENCES ietf_dt_group_group (acronym),\n"
+    sql += f"  FOREIGN KEY (draft_document) REFERENCES ietf_dt_doc_document (name),\n"
+sql += f"  FOREIGN KEY (is_also)            REFERENCES ietf_ri_subseries (subseries_doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
@@ -721,10 +738,14 @@ for rfc in ri.rfcs():
         is_also = rfc.is_also[0]
     else:
         is_also = None
+    if rfc.draft is not None:
+        document = rfc.draft[:-3]
+    else:
+        document = None
     val = (rfc.doc_id,
            rfc.title,
            rfc.doi,
-           rfc.stream,
+           rfc.stream.lower(),
            rfc.wg,
            rfc.area,
            rfc.curr_status,
@@ -733,10 +754,11 @@ for rfc in ri.rfcs():
            rfc.month,
            rfc.year,
            rfc.draft,
+           document,
            rfc.errata_url,
            is_also,
            abstract)
-    sql = f"INSERT INTO ietf_ri_rfc VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    sql = f"INSERT INTO ietf_ri_rfc VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     db_cursor.execute(sql, val)
 
     for author in rfc.authors:
