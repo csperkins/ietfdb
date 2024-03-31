@@ -675,28 +675,28 @@ db_cursor.execute(sql)
 
 sql =  f"CREATE TABLE ietf_ri_bcp (\n"
 sql += f"  id      INTEGER PRIMARY KEY,\n"
+sql += f"  bcp_id  TEXT,\n"
 sql += f"  doc_id  TEXT,\n"
-sql += f"  bcp_doc TEXT,\n"
-sql += f"  FOREIGN KEY (doc_id)  REFERENCES ietf_ri_rfc (doc_id)\n"
-sql += f"  FOREIGN KEY (bcp_doc) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (bcp_id) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (doc_id) REFERENCES ietf_ri_rfc (doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
 sql =  f"CREATE TABLE ietf_ri_fyi (\n"
 sql += f"  id      INTEGER PRIMARY KEY,\n"
+sql += f"  fyi_id  TEXT,\n"
 sql += f"  doc_id  TEXT,\n"
-sql += f"  fyi_doc TEXT,\n"
-sql += f"  FOREIGN KEY (doc_id)  REFERENCES ietf_ri_rfc (doc_id)\n"
-sql += f"  FOREIGN KEY (fyi_doc) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (fyi_id) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (doc_id) REFERENCES ietf_ri_rfc (doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
 sql =  f"CREATE TABLE ietf_ri_std (\n"
 sql += f"  id      INTEGER PRIMARY KEY,\n"
+sql += f"  std_id  TEXT,\n"
 sql += f"  doc_id  TEXT,\n"
-sql += f"  std_doc TEXT,\n"
-sql += f"  FOREIGN KEY (doc_id)  REFERENCES ietf_ri_rfc (doc_id)\n"
-sql += f"  FOREIGN KEY (std_doc) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (std_id) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (doc_id) REFERENCES ietf_ri_rfc (doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
