@@ -629,7 +629,8 @@ sql += f"  year         INTEGER,\n"
 sql += f"  draft        TEXT,\n"
 sql += f"  errata_url   TEXT,\n"
 sql += f"  is_also      TEXT,\n"
-sql += f"  abstract     TEXT\n"
+sql += f"  abstract     TEXT,\n"
+sql += f"  FOREIGN KEY (is_also) REFERENCES ietf_ri_subseries (subseries_doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
@@ -673,11 +674,19 @@ sql += f"  doc_id  TEXT\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
+sql =  f"CREATE TABLE ietf_ri_subseries (\n"
+sql += f"  subseries_doc_id  TEXT PRIMARY KEY,\n"
+sql += f"  is_bcp  INTEGER,\n"
+sql += f"  is_fyi  INTEGER,\n"
+sql += f"  is_std  INTEGER\n"
+sql += ");\n"
+db_cursor.execute(sql)
+
 sql =  f"CREATE TABLE ietf_ri_bcp (\n"
 sql += f"  id      INTEGER PRIMARY KEY,\n"
 sql += f"  bcp_id  TEXT,\n"
 sql += f"  doc_id  TEXT,\n"
-sql += f"  FOREIGN KEY (bcp_id) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (bcp_id) REFERENCES ietf_ri_subseries (subseries_doc_id)\n"
 sql += f"  FOREIGN KEY (doc_id) REFERENCES ietf_ri_rfc (doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
@@ -686,7 +695,7 @@ sql =  f"CREATE TABLE ietf_ri_fyi (\n"
 sql += f"  id      INTEGER PRIMARY KEY,\n"
 sql += f"  fyi_id  TEXT,\n"
 sql += f"  doc_id  TEXT,\n"
-sql += f"  FOREIGN KEY (fyi_id) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (fyi_id) REFERENCES ietf_ri_subseries (subseries_doc_id)\n"
 sql += f"  FOREIGN KEY (doc_id) REFERENCES ietf_ri_rfc (doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
@@ -695,7 +704,7 @@ sql =  f"CREATE TABLE ietf_ri_std (\n"
 sql += f"  id      INTEGER PRIMARY KEY,\n"
 sql += f"  std_id  TEXT,\n"
 sql += f"  doc_id  TEXT,\n"
-sql += f"  FOREIGN KEY (std_id) REFERENCES ietf_ri_rfc (doc_id)\n"
+sql += f"  FOREIGN KEY (std_id) REFERENCES ietf_ri_subseries (subseries_doc_id)\n"
 sql += f"  FOREIGN KEY (doc_id) REFERENCES ietf_ri_rfc (doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
@@ -779,6 +788,7 @@ for rfc_ni in ri.rfcs_not_issued():
 db_connection.commit()
 
 for bcp in ri.bcps():
+    db_cursor.execute("INSERT INTO ietf_ri_subseries VALUES (?, ?, ?, ?)", (bcp.doc_id, 1, 0, 0))
     for bcp_doc in bcp.is_also:
         val = (None, bcp.doc_id, bcp_doc)
         sql = "INSERT INTO ietf_ri_bcp VALUES (?, ?, ?)"
@@ -787,6 +797,7 @@ db_connection.commit()
 
 
 for fyi in ri.fyis():
+    db_cursor.execute("INSERT INTO ietf_ri_subseries VALUES (?, ?, ?, ?)", (fyi.doc_id, 0, 1, 0))
     for fyi_doc in fyi.is_also:
         val = (None, fyi.doc_id, fyi_doc)
         sql = "INSERT INTO ietf_ri_fyi VALUES (?, ?, ?)"
@@ -795,6 +806,7 @@ db_connection.commit()
 
 
 for std in ri.stds():
+    db_cursor.execute("INSERT INTO ietf_ri_subseries VALUES (?, ?, ?, ?)", (std.doc_id, 0, 0, 1))
     for std_doc in std.is_also:
         val = (None, std.doc_id, std_doc)
         sql = "INSERT INTO ietf_ri_std VALUES (?, ?, ?)"
