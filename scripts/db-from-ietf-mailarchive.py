@@ -186,14 +186,6 @@ db_connection = sqlite3.connect(database_file)
 db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file between writes
 db_cursor = db_connection.cursor()
 
-sql =  f"CREATE TABLE ietf_ma_lists (\n"
-sql += f"  name       TEXT NOT NULL PRIMARY KEY,\n"
-sql += f"  msg_count  INTEGER,\n"
-sql += f"  first_date TEXT,\n"
-sql += f"  last_date  TEXT\n"
-sql += ");\n"
-db_cursor.execute(sql)
-
 sql =  f"CREATE TABLE ietf_ma_messages (\n"
 sql += f"  message_num    INTEGER PRIMARY KEY,\n"
 sql += f"  mailing_list   TEXT NOT NULL,\n"
@@ -254,12 +246,8 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
     with open(f"{folder_path}/meta.json", "r") as inf:
         meta = json.load(inf)
 
-    msg_count = 0
-    first_date = "2038-01-19 03:14:07"
-    final_date = "1970-01-01 00:00:00"
     for msg_path in sorted(Path(folder_path).glob("*.eml")):
         tot_count += 1
-        msg_count += 1
 
         if embed:
             with open(msg_path, "rb") as inf:
@@ -337,20 +325,8 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                         db_cursor.execute(sql, (None, tot_count, cc_name, cc_addr))
             except:
                 print(f"ERROR: malformed \"Cc:\" header for {msg_path}")
-
-
-            if parsed_date is not None and parsed_date > final_date:
-                final_date = parsed_date
-            if parsed_date is not None and parsed_date < first_date:
-                first_date = parsed_date
-
     db_connection.commit()
 
-    # FIXME: can this be a virtual table calculated by the database?
-    val = (folder_name, msg_count, first_date, final_date)
-    sql = f"INSERT INTO ietf_ma_lists VALUES (?, ?, ?, ?)"
-    db_cursor.execute(sql, val)
-    db_connection.commit()
 
 print("Vacuuming database")
 db_connection.execute('VACUUM;') # Don't force fsync on the file between writes
