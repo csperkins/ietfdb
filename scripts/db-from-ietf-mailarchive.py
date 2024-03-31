@@ -171,6 +171,7 @@ elif len(sys.argv) == 4:
         database_file = sys.argv[2]
         archive_dir   = sys.argv[3]
         embed         = True
+        print("Will embed message content in database")
     else:
         print(usage)
         sys.exit(1)
@@ -181,7 +182,7 @@ else:
 
 folder_list = download_all(archive_dir)
 
-db_connection = sqlite3.connect("ietf-ma.db")
+db_connection = sqlite3.connect(database_file)
 db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file between writes
 db_cursor = db_connection.cursor()
 
@@ -353,7 +354,6 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
 
 print("Vacuuming database")
 db_connection.execute('VACUUM;') # Don't force fsync on the file between writes
-
 
 print(f"Could not parse header for {err_count} messages out of {tot_count}")
 
