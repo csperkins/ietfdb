@@ -186,6 +186,15 @@ db_connection = sqlite3.connect(database_file)
 db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file between writes
 db_cursor = db_connection.cursor()
 
+db_tables = list(map(lambda x : x[0], db_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")))
+has_dt_tables = True
+for name in ["ietf_dt_person_email"]:
+    if name not in db_tables:
+        has_dt_tables = False
+
+if has_dt_tables:
+    print("Database has ietf_dt_* tables")
+
 sql =  f"CREATE TABLE ietf_ma_messages (\n"
 sql += f"  message_num    INTEGER PRIMARY KEY,\n"
 sql += f"  mailing_list   TEXT NOT NULL,\n"
@@ -199,6 +208,8 @@ sql += f"  date_unparsed  TEXT,\n"
 sql += f"  message_id     TEXT,\n"
 sql += f"  in_reply_to    TEXT,\n"
 sql += f"  message        BLOB,\n"
+if has_dt_tables:
+    sql += f"  FOREIGN KEY (from_addr) REFERENCES ietf_dt_person_email (address),\n"
 sql += f"  FOREIGN KEY (mailing_list) REFERENCES ietf_ma_lists (name)\n"
 sql += ");\n"
 db_cursor.execute(sql)
@@ -216,6 +227,8 @@ sql += f"  id          INTEGER PRIMARY KEY,\n"
 sql += f"  message_num INTEGER,\n"
 sql += f"  to_name     TEXT,\n"
 sql += f"  to_addr     TEXT,\n"
+if has_dt_tables:
+    sql += f"  FOREIGN KEY (to_addr) REFERENCES ietf_dt_person_email (address),\n"
 sql += f"  FOREIGN KEY (message_num) REFERENCES ietf_ma_messages (message_num)\n"
 sql += ");\n"
 db_cursor.execute(sql)
@@ -226,6 +239,8 @@ sql += f"  id          INTEGER PRIMARY KEY,\n"
 sql += f"  message_num INTEGER,\n"
 sql += f"  cc_name     TEXT,\n"
 sql += f"  cc_addr     TEXT,\n"
+if has_dt_tables:
+    sql += f"  FOREIGN KEY (cc_addr) REFERENCES ietf_dt_person_email (address),\n"
 sql += f"  FOREIGN KEY (message_num) REFERENCES ietf_ma_messages (message_num)\n"
 sql += ");\n"
 db_cursor.execute(sql)
@@ -267,6 +282,18 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
             parsed_date     = None
             try:
                 hdr_from        = msg["from"]
+                # FIXME: the parseaddr() function doesn't work well
+                #
+                # Addresses of the form "&lt, 86attendees@ietf.org&gt, " <86attendees@ietf.org>
+                # are not correctly parsed?
+                #
+                # Addresses of the form "lear at cisco.com" should be rewritten "lear@cisco.com"
+                #
+                # Addresses of the form "minshall@wc.novell.com"@decpa.enet.dec.com should
+                # likely be rewritten
+                #
+                # It doesn't correctly parse "'Hallam-Baker, Phillip'" <pbaker@verisign.com>
+                # e.g., data/ietf-mailarchive/asrg/1059.eml
                 hdr_from_name, hdr_from_addr = parseaddr(hdr_from)
                 hdr_subject     = msg["subject"]
                 hdr_date        = msg["date"]
@@ -296,6 +323,10 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
             sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             db_cursor.execute(sql, val)
 
+            if has_dt_tables and hdr_from_addr is not None:
+                val = (0, hdr_from_addr, "mailarchive", None, 0, parsed_date);
+                sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
+                db_cursor.execute(sql, val)
 
             try:
                 if msg["to"] is not None:
@@ -308,6 +339,10 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                             to_name = None
                             to_addr = None
                         db_cursor.execute(sql, (None, tot_count, to_name, to_addr))
+                        if has_dt_tables and to_addr is not None:
+                            val = (0, to_addr, "mailarchive", None, 0, parsed_date);
+                            sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
+                            db_cursor.execute(sql, val)
             except:
                 print(f"ERROR: malformed \"To:\" header for {msg_path}")
 
@@ -323,6 +358,10 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                             cc_name = None
                             cc_addr = None
                         db_cursor.execute(sql, (None, tot_count, cc_name, cc_addr))
+                        if has_dt_tables and cc_addr is not None:
+                            val = (0, cc_addr, "mailarchive", None, 0, parsed_date);
+                            sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
+                            db_cursor.execute(sql, val)
             except:
                 print(f"ERROR: malformed \"Cc:\" header for {msg_path}")
     db_connection.commit()
