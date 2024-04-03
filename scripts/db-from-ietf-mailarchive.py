@@ -34,7 +34,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from email              import policy, utils
 from email.parser       import BytesParser
 from email.message      import Message
-from email.utils        import parseaddr, parsedate_to_datetime
+from email.utils        import parseaddr, parsedate_to_datetime, getaddresses
 from imapclient         import IMAPClient
 from pathlib            import Path
 
@@ -154,6 +154,50 @@ def download_all(archive_dir):
 
         return folder_list
 
+
+# =================================================================================================
+
+def fixaddr(old_addr) -> str:
+    addr = old_addr
+
+    if addr is None:
+        return None
+
+    # Rewrite arnaud.taddei=40broadcom.com@dmarc.ietf.org to arnaud.taddei@broadcom.com
+    if addr.endswith("@dmarc.ietf.org"):
+        addr = addr[:-15].replace("=40", "@")
+
+    # Rewrite "Michelle Claudé <Michelle.Claude@prism.uvsq.fr>"@prism.uvsq.fr to Michelle.Claude@prism.uvsq.fr
+    # or "minshall@wc.novell.com"@decpa.enet.dec.com to minshall@wc.novell.com
+    if addr.count("@") == 2:
+        lpart = addr.split("@")[0]
+        cpart = addr.split("@")[1]
+        rpart = addr.split("@")[2]
+        if lpart.startswith('"') and cpart.endswith('"'):
+            lcomb = f"{lpart}@{cpart}"
+            if lcomb.startswith("'") and lcomb.endswith("'"):
+                lcomb = addr[1:-1]
+            if lcomb.startswith('"') and lcomb.endswith('"'):
+                lcomb = addr[1:-1]
+            lname, laddr = parseaddr(lcomb)
+            if laddr != '':
+                addr = laddr
+
+    # Rewrite lear at cisco.com to lear@cisco.com
+    if " at " in addr:
+        addr = addr.replace(" at ", "@")
+
+    # Strip leading and trailing '
+    if addr.startswith("'") and addr.endswith("'"):
+        addr = addr[1:-1]
+
+    # Strip leading and trailing "
+    if addr.startswith('"') and addr.endswith('"'):
+        addr = addr[1:-1]
+
+    if addr != old_addr:
+        print(f"      {old_addr} -> {addr}")
+    return addr.strip()
 
 # =================================================================================================
 # Main code follows:
@@ -282,18 +326,6 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
             parsed_date     = None
             try:
                 hdr_from        = msg["from"]
-                # FIXME: the parseaddr() function doesn't work well
-                #
-                # Addresses of the form "&lt, 86attendees@ietf.org&gt, " <86attendees@ietf.org>
-                # are not correctly parsed?
-                #
-                # Addresses of the form "lear at cisco.com" should be rewritten "lear@cisco.com"
-                #
-                # Addresses of the form "minshall@wc.novell.com"@decpa.enet.dec.com should
-                # likely be rewritten
-                #
-                # It doesn't correctly parse "'Hallam-Baker, Phillip'" <pbaker@verisign.com>
-                # e.g., data/ietf-mailarchive/asrg/1059.eml
                 hdr_from_name, hdr_from_addr = parseaddr(hdr_from)
                 hdr_subject     = msg["subject"]
                 hdr_date        = msg["date"]
@@ -313,7 +345,7 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                    uidvalidity,
                    uid,
                    hdr_from_name,
-                   hdr_from_addr,
+                   fixaddr(hdr_from_addr),
                    hdr_subject,
                    parsed_date,
                    hdr_date,
@@ -324,44 +356,38 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
             db_cursor.execute(sql, val)
 
             if has_dt_tables and hdr_from_addr is not None:
-                val = (0, hdr_from_addr, "mailarchive", None, 0, parsed_date);
+                val = (0, fixaddr(hdr_from_addr), f"mailarchive: {folder_name}/{uid} from", None, 0, parsed_date);
                 sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
                 db_cursor.execute(sql, val)
 
             try:
                 if msg["to"] is not None:
-                    for to_hdr in msg["to"].strip().split(","):
-                        sql = f"INSERT INTO ietf_ma_messages_to VALUES (?, ?, ?, ?)"
-                        try:
-                            to_name, to_addr = parseaddr(to_hdr)
-                        except:
-                            print(f"ERROR: cannot parse \"To:\" header for {msg_path}")
-                            to_name = None
-                            to_addr = None
-                        db_cursor.execute(sql, (None, tot_count, to_name, to_addr))
-                        if has_dt_tables and to_addr is not None:
-                            val = (0, to_addr, "mailarchive", None, 0, parsed_date);
-                            sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
-                            db_cursor.execute(sql, val)
+                    try:
+                        for to_name, to_addr in getaddresses([msg["to"]]):
+                            sql = f"INSERT INTO ietf_ma_messages_to VALUES (?, ?, ?, ?)"
+                            db_cursor.execute(sql, (None, tot_count, to_name, fixaddr(to_addr)))
+                            if has_dt_tables and to_addr is not None:
+                                val = (0, fixaddr(to_addr), f"mailarchive: {folder_name}/{uid} to", None, 0, parsed_date);
+                                sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
+                                db_cursor.execute(sql, val)
+                    except:
+                        print(f"ERROR: cannot parse \"To:\" header for {msg_path}")
             except:
                 print(f"ERROR: malformed \"To:\" header for {msg_path}")
 
 
             try:
                 if msg["cc"] is not None:
-                    for cc_hdr in msg["cc"].strip().split(","):
-                        sql = f"INSERT INTO ietf_ma_messages_cc VALUES (?, ?, ?, ?)"
-                        try:
-                            cc_name, cc_addr = parseaddr(cc_hdr)
-                        except:
-                            print(f"ERROR: cannot parse \"Cc:\" header for {msg_path}")
-                            cc_name = None
-                            cc_addr = None
-                        db_cursor.execute(sql, (None, tot_count, cc_name, cc_addr))
-                        if has_dt_tables and cc_addr is not None:
-                            val = (0, cc_addr, "mailarchive", None, 0, parsed_date);
-                            sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
-                            db_cursor.execute(sql, val)
+                    try:
+                        for cc_name, cc_addr in getaddresses([msg["cc"]]):
+                            sql = f"INSERT INTO ietf_ma_messages_to VALUES (?, ?, ?, ?)"
+                            db_cursor.execute(sql, (None, tot_count, cc_name, fixaddr(cc_addr)))
+                            if has_dt_tables and cc_addr is not None:
+                                val = (0, fixaddr(cc_addr), f"mailarchive: {folder_name}/{uid} cc", None, 0, parsed_date);
+                                sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
+                                db_cursor.execute(sql, val)
+                    except:
+                        print(f"ERROR: cannot parse \"Cc:\" header for {msg_path}")
             except:
                 print(f"ERROR: malformed \"Cc:\" header for {msg_path}")
     db_connection.commit()
