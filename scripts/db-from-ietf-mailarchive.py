@@ -355,8 +355,11 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
             sql = f"INSERT INTO ietf_ma_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             db_cursor.execute(sql, val)
 
+            # Insert "From:" addresses into the ietf_dt_person_email table.
+            # These addresses are largely well-formed in the email archive,
+            # unlike the "To:" or "Cc:" addresses.
             if has_dt_tables and hdr_from_addr is not None:
-                val = (0, fixaddr(hdr_from_addr), f"mailarchive: {folder_name}/{uid} from", None, 0, parsed_date);
+                val = (0, fixaddr(hdr_from_addr), f"mailarchive", None, 0, parsed_date);
                 sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
                 db_cursor.execute(sql, val)
 
@@ -366,26 +369,33 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
                         for to_name, to_addr in getaddresses([msg["to"]]):
                             sql = f"INSERT INTO ietf_ma_messages_to VALUES (?, ?, ?, ?)"
                             db_cursor.execute(sql, (None, tot_count, to_name, fixaddr(to_addr)))
-                            if has_dt_tables and to_addr is not None:
-                                val = (0, fixaddr(to_addr), f"mailarchive: {folder_name}/{uid} to", None, 0, parsed_date);
-                                sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
-                                db_cursor.execute(sql, val)
+                            # Many of the "To:" addresses are malformed.
+                            # It's not clear it's useful to add them to
+                            # the ietf_dt_person_email table.
+                            #
+                            # if has_dt_tables and to_addr is not None:
+                            #     val = (0, fixaddr(to_addr), f"mailarchive", None, 0, parsed_date);
+                            #     sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
+                            #     db_cursor.execute(sql, val)
                     except:
                         print(f"ERROR: cannot parse \"To:\" header for {msg_path}")
             except:
                 print(f"ERROR: malformed \"To:\" header for {msg_path}")
 
-
             try:
                 if msg["cc"] is not None:
                     try:
                         for cc_name, cc_addr in getaddresses([msg["cc"]]):
-                            sql = f"INSERT INTO ietf_ma_messages_to VALUES (?, ?, ?, ?)"
+                            sql = f"INSERT INTO ietf_ma_messages_cc VALUES (?, ?, ?, ?)"
                             db_cursor.execute(sql, (None, tot_count, cc_name, fixaddr(cc_addr)))
-                            if has_dt_tables and cc_addr is not None:
-                                val = (0, fixaddr(cc_addr), f"mailarchive: {folder_name}/{uid} cc", None, 0, parsed_date);
-                                sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
-                                db_cursor.execute(sql, val)
+                            # Many of the "Cc:" addresses are malformed.
+                            # It's not clear it's useful to add them to
+                            # the ietf_dt_person_email table.
+                            #
+                            # if has_dt_tables and cc_addr is not None:
+                            #     val = (0, fixaddr(cc_addr), f"mailarchive", None, 0, parsed_date);
+                            #     sql = f"INSERT or IGNORE INTO ietf_dt_person_email VALUES (?, ?, ?, ?, ?, ?)"
+                            #     db_cursor.execute(sql, val)
                     except:
                         print(f"ERROR: cannot parse \"Cc:\" header for {msg_path}")
             except:
