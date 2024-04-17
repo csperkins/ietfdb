@@ -60,14 +60,14 @@ def fetch_folder(folder_name, archive_dir):
         if not msg_path.exists():
             msg = imap.fetch(msg_id, ["RFC822"])
             if msg == {}:
-                print(f"  {msg_path} is unavailable")
+                print(f"      {msg_path} is unavailable")
             else:
                 tmp_path = msg_path.with_suffix(".tmp")
                 assert b'RFC822' in msg[msg_id]
                 with open(tmp_path, "wb") as outf:
                     outf.write(msg[msg_id][b"RFC822"])
                 tmp_path.replace(msg_path)
-                print(f"  {msg_path}")
+                print(f"      {msg_path}")
                 modified = True
 
     # Save metadata:
@@ -85,7 +85,7 @@ def fetch_folder(folder_name, archive_dir):
 
 
 def download_all(archive_dir):
-    print("Downloading messages:")
+    print("    Downloading messages:")
     with ThreadPoolExecutor(max_workers=16) as executor:
         # Login to the IETF mail archive using IMAP:
         imap = IMAPClient(host='imap.ietf.org', ssl=True, use_uid=True)
@@ -112,7 +112,7 @@ def download_all(archive_dir):
             folder_path = Path(f"{archive_dir}/{name[len(imap_prefix):]}")
             folder_path.mkdir(parents=True, exist_ok=True)
 
-            print(f"  {folder_path}")
+            print(f"      {folder_path}")
 
             meta_path = folder_path / "meta.json"
             if meta_path.exists():
@@ -136,10 +136,10 @@ def download_all(archive_dir):
             if clean:
                 print(f"WARNING: UIDVALIDITY changed {name}")
                 for msg_path in sorted(folder_path.glob("*.eml")):
-                    print(f"  {msg_path} removed")
+                    print(f"      {msg_path} removed")
                     msg_path.unlink()
                 if meta_path.exists():
-                    print(f"  {meta_path} removed")
+                    print(f"      {meta_path} removed")
                     meta_path.unlink()
 
             if fetch:
@@ -196,7 +196,7 @@ def fixaddr(old_addr) -> str:
         addr = addr[1:-1]
 
     if addr != old_addr:
-        print(f"      {old_addr} -> {addr}")
+        print(f"          {old_addr} -> {addr}")
     return addr.strip()
 
 # =================================================================================================
@@ -213,7 +213,7 @@ elif len(sys.argv) == 4:
         database_file = sys.argv[2]
         archive_dir   = sys.argv[3]
         embed         = True
-        print("Will embed message content in database")
+        print("    Embedding message content in database")
     else:
         print(usage)
         sys.exit(1)
@@ -223,7 +223,7 @@ else:
 
 print(f"db-from-ietf-mailarchive.py: {database_file} {archive_dir}", end="")
 if embed:
-    print(" (embed)")
+    print("    Embedding message contents in database")
 else:
     print("")
 
@@ -240,7 +240,7 @@ for name in ["ietf_dt_person_email"]:
         has_dt_tables = False
 
 if has_dt_tables:
-    print("Database has ietf_dt_* tables")
+    print("  Database has ietf_dt_* tables")
 
 sql =  f"CREATE TABLE ietf_ma_messages (\n"
 sql += f"  message_num    INTEGER PRIMARY KEY,\n"
@@ -296,14 +296,14 @@ db_cursor.execute(sql)
 err_count = 0
 tot_count = 0
 
-print("Populating database:")
+print("  Populating database:")
 for imap_flags, imap_delimiter, imap_folder in folder_list:
     if b'\\Noselect' in imap_flags:
         continue
     folder_name = imap_folder.split(imap_delimiter.decode("utf-8"))[-1]
     folder_path = f"{archive_dir}/{folder_name}"
 
-    print(f"   {folder_name}")
+    print(f"     {folder_name}")
 
     with open(f"{folder_path}/meta.json", "r") as inf:
         meta = json.load(inf)
@@ -406,8 +406,8 @@ for imap_flags, imap_delimiter, imap_folder in folder_list:
     db_connection.commit()
 
 
-print("Vacuuming database")
+print("  Vacuuming database")
 db_connection.execute('VACUUM;') # Don't force fsync on the file between writes
 
-print(f"Could not parse header for {err_count} messages out of {tot_count}")
+print(f"  Could not parse header for {err_count} messages out of {tot_count}")
 

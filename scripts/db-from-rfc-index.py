@@ -611,9 +611,10 @@ else:
     print("Usage: scripts/db-from-rfc-index.py <database.db>")
     sys.exit(1)
 
+print(f"db-from-rfc-index.py: {database_file}")
+
 db_connection = sqlite3.connect(database_file)
 db_cursor = db_connection.cursor()
-
 
 db_tables = list(map(lambda x : x[0], db_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")))
 has_dt_tables = True
@@ -622,7 +623,7 @@ for name in ["ietf_dt_name_streamname", "ietf_dt_group_group"]:
         has_dt_tables = False
 
 if has_dt_tables:
-    print("Database has ietf_dt_* tables")
+    print("  Database has ietf_dt_* tables")
 
 
 sql =  f"CREATE TABLE ietf_ri_rfc (\n"
@@ -726,7 +727,7 @@ sql += f"  FOREIGN KEY (doc_id) REFERENCES ietf_ri_rfc (doc_id)\n"
 sql += ");\n"
 db_cursor.execute(sql)
 
-print("Fetching RFC Index")
+print("  Fetching RFC Index")
 ri = RFCIndex()
 
 for rfc in ri.rfcs():
@@ -836,6 +837,6 @@ for std in ri.stds():
 db_connection.commit()
 
 
-print("Vacuuming database")
+print("  Vacuuming database")
 db_connection.execute('VACUUM;')
 

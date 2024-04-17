@@ -475,9 +475,9 @@ db_cursor = db_connection.cursor()
 # Find the endpoints to mirror and fetch their database schema:
 schemas   = {}
 endpoints = []
-print("Extracting API endpoints:") 
+print("  Extracting API endpoints:") 
 for endpoint in dt.api_endpoints():
-    print(f"  {endpoint}")
+    print(f"    {endpoint}")
     if endpoint not in endpoints_to_mirror:
         print(f"ERROR: mirroring for {endpoint} not configured")
     else:
@@ -487,9 +487,9 @@ for endpoint in dt.api_endpoints():
 print("")
 
 # Find the to_one and to_many mappings:
-print("Extracting to_one and to_many mappings:")
+print("    Extracting to_one and to_many mappings:")
 for endpoint in endpoints:
-    print(f"  {endpoint}")
+    print(f"      {endpoint}")
     schema = schemas[endpoint]
     schema["to_one"]  = {}
     schema["to_many"] = {}
@@ -514,7 +514,7 @@ for endpoint in endpoints:
                             "refers_to_table": "ietf_dt_" + "_".join(item[column["name"]].split("/")[3:-2])
                         }
                         schema["to_one"][column["name"]] = to_one
-                        print(f"    {column['name']} -> {to_one['refers_to_table']}")
+                        print(f"        {column['name']} -> {to_one['refers_to_table']}")
                 if column["name"] not in schema["to_one"]:
                     found_all = False
             if column["type"] == "to_many":
@@ -526,17 +526,17 @@ for endpoint in endpoints:
                             "refers_to_table": "ietf_dt_" + "_".join(item[column["name"]][0].split("/")[3:-2])
                         }
                         schema["to_many"][column["name"]] = to_many
-                        print(f"    {column['name']} -> {to_many['refers_to_table']} (many)")
+                        print(f"        {column['name']} -> {to_many['refers_to_table']} (many)")
                 if column["name"] not in schema["to_many"]:
                     found_all = False
         if found_all:
             break
     for column in schema["columns"].values():
         if column["type"] == "to_one" and not column["name"] in schema["to_one"]:
-            print(f"    {column['name']} is to_one but not used")
+            print(f"        {column['name']} is to_one but not used")
             column["type"] = None
         if column["type"] == "to_many" and not column["name"] in schema["to_many"]:
-            print(f"    {column['name']} is to_many but not used")
+            print(f"        {column['name']} is to_many but not used")
             column["type"] = None
 print("")
 
@@ -549,7 +549,7 @@ print("")
 for endpoint in endpoints:
     import_db_table(db_cursor, db_connection, schemas, endpoint, dt)
 
-print("Vacuuming database")
+print("    Vacuuming database")
 db_connection.execute('VACUUM;') # Don't force fsync on the file between writes
 
 # vim: set tw=0 ai et:
