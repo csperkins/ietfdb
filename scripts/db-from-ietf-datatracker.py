@@ -24,10 +24,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import json
+import os
 import requests
 import sqlite3
 import sys
-import json
 
 from graphlib import TopologicalSorter
 from typing   import Any, Dict, Iterator
@@ -70,12 +71,12 @@ class Datatracker:
         r1 = self.session.get(f"{self.dt_url}api/v1/")
         if r1.status_code == 200:
             for category in r1.json().values():
-                r2 = self.session.get(f"{self.dt_url}{category['list_endpoint']}")
+                r2 = self.session.get(f"{self.dt_url.rstrip('/')}{category['list_endpoint']}")
                 if r2.status_code == 200:
                     for endpoint in r2.json().values():
                         yield endpoint["list_endpoint"]
                 else:
-                    print(f"Cannot fetch secondary API endpoints: {r2.status_code}")
+                    print(f"Cannot fetch secondary API endpoint: {r2.status_code} ({r2.url})")
                     sys.exit(1)
         else:
             print(f"Cannot fetch top-level API endpoints: {r1.status_code}")
@@ -83,7 +84,7 @@ class Datatracker:
 
 
     def schema_for_endpoint(self, api_endpoint:str):
-        resp = self.session.get(f"{self.dt_url}{endpoint}schema/")
+        resp = self.session.get(f"{self.dt_url.rstrip('/')}{endpoint}schema/")
         if resp.status_code == 200:
             schema = resp.json()
             result = {
@@ -111,7 +112,7 @@ class Datatracker:
                 result["columns"][field_name] = column
             return result
         else:
-            print(f"ERROR: {resp.status_code}")
+            print(f"ERROR: {resp.status_code} ({resp.url})")
             sys.exit(1)
 
 
@@ -452,10 +453,21 @@ def import_db_table(db_cursor, db_connection, schemas, endpoint, dt):
     db_connection.commit()
 
 
+# =================================================================================================
+# Main code follows:
 
-dt = Datatracker("http://localhost:8000/")
+if len(sys.argv) == 2:
+    database_file = sys.argv[1]
+else:
+    print("Usage: scripts/db-from-ietf-datatracker.py <database.db>")
+    sys.exit(1)
 
-db_connection = sqlite3.connect("ietf.db")
+url = os.environ.get("IETFDATA_DT_URL", "https://datatracker.ietf.org/")
+dt  = Datatracker(url)
+
+print(f"db-from-ietf-datatracker.py: {url} -> {database_file}")
+
+db_connection = sqlite3.connect(database_file)
 db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file between writes
 
 db_cursor = db_connection.cursor()
