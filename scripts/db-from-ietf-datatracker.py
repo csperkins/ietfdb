@@ -465,7 +465,7 @@ else:
 url = os.environ.get("IETFDATA_DT_URL", "https://datatracker.ietf.org/")
 dt  = Datatracker(url)
 
-print(f"db-from-ietf-datatracker.py: {url} -> {database_file}")
+print(f"db-from-ietf-datatracker.py: {database_file} {url}")
 
 db_connection = sqlite3.connect(database_file)
 db_connection.execute('PRAGMA synchronous = 0;') # Don't force fsync on the file between writes

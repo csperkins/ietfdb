@@ -202,8 +202,6 @@ def fixaddr(old_addr) -> str:
 # =================================================================================================
 # Main code follows:
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 usage = "Usage: scripts/db-from-ietf-mailarchive.py [--embed] <database.db> <mailarchive_dir>"
 
 if len(sys.argv) == 3:
@@ -223,6 +221,11 @@ else:
     print(usage)
     sys.exit(1)
 
+print(f"db-from-ietf-mailarchive.py: {database_file} {archive_dir}", end="")
+if embed:
+    print(" (embed)")
+else:
+    print("")
 
 folder_list = download_all(archive_dir)
 
