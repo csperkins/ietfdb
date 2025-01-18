@@ -213,7 +213,6 @@ elif len(sys.argv) == 4:
         database_file = sys.argv[2]
         archive_dir   = sys.argv[3]
         embed         = True
-        print("    Embedding message content in database")
     else:
         print(usage)
         sys.exit(1)
@@ -221,11 +220,9 @@ else:
     print(usage)
     sys.exit(1)
 
-print(f"db-from-ietf-mailarchive.py: {database_file} {archive_dir}", end="")
+print(f"db-from-ietf-mailarchive.py: {database_file} {archive_dir}")
 if embed:
     print("    Embedding message contents in database")
-else:
-    print("")
 
 folder_list = download_all(archive_dir)
 
